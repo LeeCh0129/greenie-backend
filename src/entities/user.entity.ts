@@ -1,4 +1,12 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Comment } from './comment.entity';
 import { PostLike } from './post-like.entity';
 import { Post } from './post.entity';
@@ -17,12 +25,21 @@ export class User {
   @Column({ unique: true, select: false })
   firebase_id: string;
 
-  @OneToMany((type) => Post, (post) => post.author)
+  @OneToMany(() => Post, (post) => post.author)
   post: Post[];
 
-  @OneToMany((type) => PostLike, (postLike) => postLike.user)
+  @OneToMany(() => PostLike, (postLike) => postLike.user)
   postLike: PostLike[];
 
-  @OneToMany((type) => Comment, (comment) => comment.author)
+  @OneToMany(() => Comment, (comment) => comment.author)
   comment: Comment[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

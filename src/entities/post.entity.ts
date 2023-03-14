@@ -1,10 +1,12 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Comment } from './comment.entity';
 import { PostLike } from './post-like.entity';
@@ -24,15 +26,21 @@ export class Post {
   @Column({ default: 0 })
   likeCount: number;
 
-  @ManyToOne((type) => User, (user) => user.post)
+  @ManyToOne(() => User, (user) => user.post)
   author: User;
 
-  @OneToMany((type) => PostLike, (postLike) => postLike.post)
+  @OneToMany(() => PostLike, (postLike) => postLike.post)
   postLike: PostLike[];
 
-  @OneToMany((type) => Comment, (comment) => comment.post)
+  @OneToMany(() => Comment, (comment) => comment.post)
   comment: Comment[];
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
