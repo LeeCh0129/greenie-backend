@@ -23,7 +23,7 @@ export class User {
   nickname: string;
 
   @Column({ unique: true, select: false })
-  firebase_id: string;
+  firebaseId: string;
 
   @OneToMany(() => Post, (post) => post.author)
   post: Post[];

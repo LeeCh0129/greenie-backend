@@ -20,10 +20,10 @@ export class AppController {
     return 'Hello Greenie';
   }
 
-  @Get('signin')
+  @Post('signin')
   @UseGuards(AuthGuard)
   signIn(@CurrentUser() user) {
-    return this.authService.signIn(+user.id, user.uid);
+    return this.authService.signIn(+user.id, user.firebaseId);
   }
 
   @Post('signup')
@@ -32,6 +32,7 @@ export class AppController {
   }
 
   @Post('email-verification')
+  @UseGuards(AuthGuard)
   emailVerification(@Body('email') email: string) {
     return this.authService.requestEmailVerification(email);
   }

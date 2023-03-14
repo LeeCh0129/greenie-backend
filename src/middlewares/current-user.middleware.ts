@@ -21,7 +21,7 @@ export class CurrentUserMiddleware implements NestMiddleware {
         );
         req['user'] = {
           id: decodedToken['id'] || '',
-          firebase_id: decodedToken['uid'] || '',
+          firebaseId: decodedToken['uid'] || '',
           email: decodedToken['email'] || '',
           roles: decodedToken['roles'] || '',
         };

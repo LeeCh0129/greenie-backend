@@ -21,8 +21,8 @@ export class AuthService {
     this.auth = firebaseApp.getAuth();
   }
 
-  async signIn(id: number, uid: string): Promise<User> {
-    const firebaseUser = await this.auth.getUser(uid);
+  async signIn(id: number, firebaseId: string): Promise<User> {
+    const firebaseUser = await this.auth.getUser(firebaseId);
     if (!firebaseUser) {
       throw new NotFoundException('user not exist on Auth');
     }
@@ -42,13 +42,13 @@ export class AuthService {
   }
 
   async requestEmailVerification(email: string) {
+    const user = await this.auth.getUserByEmail(email);
+
+    if (user.emailVerified) {
+      throw new BadRequestException('이미 인증이 완료된 이메일입니다');
+    }
+
     try {
-      const user = await this.auth.getUserByEmail(email);
-
-      if (user.emailVerified) {
-        return new BadRequestException('Your email has already been verified');
-      }
-
       const emailLink = await this.auth.generateEmailVerificationLink(email);
 
       await this.mailerService.sendMail({
@@ -72,7 +72,7 @@ export class AuthService {
   ): Promise<User> {
     const exist = await this.userRepository.findOneBy({ email });
     if (exist) {
-      throw new BadRequestException('already exist email');
+      throw new BadRequestException('이미 존재하는 이메일입니다');
     }
     const firebaseUser = await this.auth
       .createUser({
@@ -82,13 +82,13 @@ export class AuthService {
         disabled: false,
       })
       .catch(() => {
-        throw new BadRequestException('already exist account');
+        throw new BadRequestException('이미 존재하는 계정입니다');
       });
 
     const user = this.userRepository.create({
       email,
       nickname,
-      firebase_id: firebaseUser.uid,
+      firebaseId: firebaseUser.uid,
     });
 
     await this.userRepository.save(user);

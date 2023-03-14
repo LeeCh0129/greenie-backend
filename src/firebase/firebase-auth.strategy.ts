@@ -37,7 +37,7 @@ export class FirebaseAuthStrategy extends PassportStrategy(
       throw new UnauthorizedException('token is not validate');
     }
     const user = await this.userRepository.findOneBy({
-      firebase_id: firebaseUser.uid,
+      firebaseId: firebaseUser.uid,
     });
     if (!user) {
       throw new NotFoundException('user not found');
