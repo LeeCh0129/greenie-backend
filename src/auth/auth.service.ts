@@ -24,10 +24,10 @@ export class AuthService {
   async signIn(id: number, firebaseId: string): Promise<User> {
     const firebaseUser = await this.auth.getUser(firebaseId);
     if (!firebaseUser) {
-      throw new NotFoundException('user not exist on Auth');
+      throw new NotFoundException('가입된 계정이 아닙니다');
     }
     if (!firebaseUser.emailVerified) {
-      throw new BadRequestException('Your email has not been verified');
+      throw new BadRequestException('이메일 인증이 되지 않았습니다');
     }
 
     const user = await this.userRepository.findOne({
@@ -35,7 +35,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('user not exist on Database');
+      throw new NotFoundException('존재하지 않는 계정입니다');
     }
 
     return user;
