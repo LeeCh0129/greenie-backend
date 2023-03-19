@@ -32,11 +32,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/greenie
 
-      - name: Set up Docker
-        uses: actions/setup-docker@v2
-        with:
-          dockerfile: ./Dockerfile
-
       - name: Deploy to Qnap NAS
         uses: appleboy/ssh-action@v0.1.8
         with:
