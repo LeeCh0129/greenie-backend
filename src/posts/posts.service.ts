@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CommentsService } from 'src/comments/comments.service';
+import { PageDto } from 'src/auth/dtos/page.dto';
 import { PostLike } from 'src/entities/post-like.entity';
 import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
-import { CreateCommentDto } from './dtos/create-comment.dto';
 
 @Injectable()
 export class PostsService {
@@ -13,15 +12,26 @@ export class PostsService {
     @InjectRepository(Post) private postRepository: Repository<Post>,
     @InjectRepository(PostLike)
     private postLikeRepository: Repository<PostLike>,
-    private commentsService: CommentsService,
   ) {}
 
-  async findAll(): Promise<Post[]> {
-    return await this.postRepository.find({ relations: { author: true } });
-  }
-
-  async findAllWithUsers(): Promise<Post[]> {
-    return await this.postRepository.find({ relations: ['author'] });
+  async findAll(page: number, take: number): Promise<PageDto<Post>> {
+    const posts = await this.postRepository
+      .createQueryBuilder('post')
+      .take(take)
+      .skip(take * (page - 1))
+      .select([
+        'post.id',
+        'post.title',
+        'post.likeCount',
+        'post.createdAt',
+        'user.id',
+        'user.nickname',
+      ])
+      .leftJoin('post.author', 'user')
+      .where('post.deletedAt IS NULL')
+      .orderBy('post.createdAt', 'DESC')
+      .getManyAndCount();
+    return new PageDto<Post>(posts[1], take, posts[0]);
   }
 
   async patchLike(user: User, postId: number) {
@@ -67,21 +77,5 @@ export class PostsService {
     await this.postRepository.save(post);
 
     return post;
-  }
-
-  async createComment(
-    user: User,
-    postId: number,
-    createCommentDto: CreateCommentDto,
-  ) {
-    const post = await this.postRepository.findOneBy({ id: postId });
-
-    await this.commentsService.createComment(
-      user,
-      post,
-      createCommentDto.content,
-      createCommentDto.parentId,
-      createCommentDto.replyToId,
-    );
   }
 }

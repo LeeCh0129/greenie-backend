@@ -1,14 +1,14 @@
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 
-export class FindCommentDTO {
-  @Transform(({ value }) => parseInt(value))
+export class PaginationDto {
   @IsNumber()
+  @Transform(({ value }) => parseInt(value))
   @IsOptional()
   page: number = 1;
 
-  @Transform(({ value }) => parseInt(value))
   @IsNumber()
+  @Transform(({ value }) => parseInt(value))
   @IsOptional()
   take: number = 10;
 }

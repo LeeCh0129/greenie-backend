@@ -24,6 +24,7 @@ export class CommentsService {
         .skip(take * (page - 1))
         .leftJoinAndSelect('comment.author', 'author')
         .where('comment.post_id = :postId', { postId })
+        // .andWhere('comment.deletedAt = null')
         .orderBy('comment.group', 'DESC')
         .getManyAndCount();
       return new PageDto<Comment>(result[1], take, result[0]);
@@ -32,9 +33,9 @@ export class CommentsService {
     }
   }
 
-  async createComment(
+  async create(
     author: User,
-    post: Post,
+    postId: number,
     content: string,
     parentId: number | undefined,
     replyToId: number | undefined,
@@ -44,6 +45,9 @@ export class CommentsService {
 
     const replyTo = new Comment();
     replyTo.id = replyToId;
+
+    const post = new Post();
+    post.id = postId;
 
     const comment = this.commentsRepository.create({
       author,

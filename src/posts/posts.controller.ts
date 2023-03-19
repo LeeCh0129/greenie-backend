@@ -15,7 +15,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { CreateCommentDto } from './dtos/create-comment.dto';
 import { User } from 'src/entities/user.entity';
 import { CommentsService } from 'src/comments/comments.service';
-import { FindCommentDTO } from 'src/comments/dtos/find-comment.dto';
+import { PaginationDto } from 'src/comments/dtos/find-comment.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -25,21 +25,16 @@ export class PostsController {
   ) {}
 
   @Get()
-  findAll() {
-    return this.postsService.findAll();
-  }
-
-  @Get('users')
-  findAllWithUsers() {
-    return this.postsService.findAllWithUsers();
+  findAll(@Query() query: PaginationDto) {
+    return this.postsService.findAll(query.page, query.take);
   }
 
   @Get(':id/comments')
-  findAllComments(@Param('id') postId: number, @Query() query: FindCommentDTO) {
+  findAllComments(@Param('id') postId: number, @Query() query: PaginationDto) {
     return this.commentsService.findAll(postId, query.page, query.take);
   }
 
-  @Patch(':id')
+  @Patch(':id/like')
   @UseGuards(AuthGuard)
   likePost(@CurrentUser() user, @Param('id') postId: string) {
     return this.postsService.patchLike(user, parseInt(postId));
@@ -59,13 +54,15 @@ export class PostsController {
   @UseGuards(AuthGuard)
   createComment(
     @CurrentUser() user,
-    @Body() createCommentDto: CreateCommentDto,
     @Param('id') postId: string,
+    @Body() createCommentDto: CreateCommentDto,
   ) {
-    return this.postsService.createComment(
+    return this.commentsService.create(
       user,
       parseInt(postId),
-      createCommentDto,
+      createCommentDto.content,
+      createCommentDto.parentId,
+      createCommentDto.replyToId,
     );
   }
 }
