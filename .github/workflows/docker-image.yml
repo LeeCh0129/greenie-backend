@@ -33,7 +33,7 @@ jobs:
           context: ./
           file: ./dockerfile
           push: true
-          tag: ${{ secrets.DOCKER_USERNAME }}/greenie
+          tags: ${{ secrets.DOCKER_USERNAME }}/greenie
 
       - name: Deploy to Qnap NAS
         uses: appleboy/ssh-action@v0.1.8
