@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Deploy to Qnap NAS
-        uses: appleboy/ssh-action@v0.4.2
+        uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USERNAME }}
