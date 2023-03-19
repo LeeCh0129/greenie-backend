@@ -10,9 +10,7 @@ env:
   DB_PORT: ${{ secrets.DB_PORT }}
   DB_USERNAME: ${{ secrets.DB_USERNAME }}
   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  DB_NAME:
-    ${{ secrets.DB_NAME }}
-    # tags: ${{ secrets.DOCKER_USERNAME }}/greenie:latest
+  DB_NAME: ${{ secrets.DB_NAME }}
 
 jobs:
   build-and-deploy:
@@ -40,7 +38,6 @@ jobs:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USERNAME }}
           password: ${{ secrets.NAS_PASSWORD }}
-          port: 22
           script: |
             docker pull ${{ secrets.NAS_USERNAME }}/greenie:latest
             docker stop greenie || true
