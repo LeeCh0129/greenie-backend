@@ -39,17 +39,7 @@ jobs:
           password: ${{ secrets.NAS_PASSWORD }}
           envs: DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_NAME
           script: |
-            export DB_HOST=$DB_HOST
-            export DB_PORT=$DB_PORT
-            export DB_USERNAME=$DB_USERNAME
-            export DB_PASSWORD=$DB_PASSWORD
-            export DB_NAME=$DB_NAME
-            echo "$DB_HOST"
-            echo "$DB_PORT"
-            echo "$DB_USERNAME"
-            echo "$DB_PASSWORD"
-            echo "$DB_NAME"
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker pull ${{ secrets.DOCKER_USERNAME }}/greenie:latest
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker stop greenie || true
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm greenie || true
-            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d --name greenie -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/greenie:latest
+            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USERNAME=$DB_USERNAME -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=$DB_NAME --name greenie -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/greenie:latest
