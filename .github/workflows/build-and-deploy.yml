@@ -42,4 +42,4 @@ jobs:
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker pull ${{ secrets.DOCKER_USERNAME }}/greenie:latest
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker stop greenie || true
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm greenie || true
-            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USERNAME=$DB_USERNAME -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=$DB_NAME --name greenie -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/greenie:latest
+            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d -e PORT=3000 -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USERNAME=$DB_USERNAME -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=$DB_NAME --name greenie -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/greenie:latest
