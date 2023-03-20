@@ -44,7 +44,11 @@ jobs:
             export DB_USERNAME=$DB_USERNAME
             export DB_PASSWORD=$DB_PASSWORD
             export DB_NAME=$DB_NAME
-            printenv
+            echo "$DB_HOST"
+            echo "$DB_PORT"
+            echo "$DB_USERNAME"
+            echo "$DB_PASSWORD"
+            echo "$DB_NAME"
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker pull ${{ secrets.DOCKER_USERNAME }}/greenie:latest
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker stop greenie || true
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm greenie || true
