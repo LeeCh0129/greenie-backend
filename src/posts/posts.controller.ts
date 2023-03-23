@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -29,17 +31,6 @@ export class PostsController {
     return this.postsService.findAll(query.page, query.take);
   }
 
-  @Get(':id/comments')
-  findAllComments(@Param('id') postId: number, @Query() query: PaginationDto) {
-    return this.commentsService.findAll(postId, query.page, query.take);
-  }
-
-  @Patch(':id/like')
-  @UseGuards(AuthGuard)
-  likePost(@CurrentUser() user, @Param('id') postId: string) {
-    return this.postsService.patchLike(user, parseInt(postId));
-  }
-
   @Post()
   @UseGuards(AuthGuard)
   create(@CurrentUser() user: User, @Body() createPostDto: CreatePostDto) {
@@ -48,6 +39,39 @@ export class PostsController {
       createPostDto.title,
       createPostDto.body,
     );
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  patchPost(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) postId: number,
+    @Body() body: Partial<CreatePostDto>,
+  ) {
+    return this.postsService.update(postId, user, body);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  deletePost(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) postId: number,
+  ) {
+    return this.postsService.delete(postId, user);
+  }
+
+  @Patch(':id/like')
+  @UseGuards(AuthGuard)
+  likePost(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) postId: number,
+  ) {
+    return this.postsService.patchLike(user, postId);
+  }
+
+  @Get(':id/comments')
+  findAllComments(@Param('id') postId: number, @Query() query: PaginationDto) {
+    return this.commentsService.findAll(postId, query.page, query.take);
   }
 
   @Post(':id/comments')

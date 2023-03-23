@@ -33,13 +33,15 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SLACK_WEBHOOK: ${{ secrets. SLACK_WEBHOOK }}
         with:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USERNAME }}
           password: ${{ secrets.NAS_PASSWORD }}
-          envs: DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_NAME
+          envs: DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_NAME,SENTRY_DSN,SLACK_WEBHOOK
           script: |
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker pull ${{ secrets.DOCKER_USERNAME }}/greenie:latest
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker stop greenie || true
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm greenie || true
-            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d -e PORT=3000 -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USERNAME=$DB_USERNAME -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=$DB_NAME --name greenie -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/greenie:latest
+            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d -e PORT=3000 -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USERNAME=$DB_USERNAME -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=$DB_NAME -e SENTRY_DSN=$SENTRY_DSN -e SLACK_WEBHOOK=$SLACK_WEBHOOK --name greenie -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/greenie:latest

@@ -2,6 +2,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,7 +22,7 @@ export class AuthService {
     this.auth = firebaseApp.getAuth();
   }
 
-  async signIn(id: number, firebaseId: string): Promise<User> {
+  async signIn(id: number, firebaseId: string): Promise<object> {
     const firebaseUser = await this.auth.getUser(firebaseId);
     if (!firebaseUser) {
       throw new NotFoundException('가입된 계정이 아닙니다');
@@ -38,14 +39,21 @@ export class AuthService {
       throw new NotFoundException('존재하지 않는 계정입니다');
     }
 
-    return user;
+    return { message: '로그인 성공' };
   }
 
   async requestEmailVerification(email: string) {
-    const user = await this.auth.getUserByEmail(email);
+    const user = await this.auth.getUserByEmail(email).catch((error) => {
+      if (error['errorInfo']['code'] == 'auth/user-not-found') {
+        throw new NotFoundException('가입된 회원이 아닙니다.');
+      }
+      throw new InternalServerErrorException(
+        '유저 데이터를 불러오는데 실패했습니다.',
+      );
+    });
 
     if (user.emailVerified) {
-      throw new BadRequestException('이미 인증이 완료된 이메일입니다');
+      throw new BadRequestException('이미 인증된 이메일입니다.');
     }
 
     try {
@@ -61,7 +69,7 @@ export class AuthService {
 
       return { message: '이메일 인증을 완료해주세요' };
     } catch (error) {
-      throw new BadRequestException(error['errorInfo']['message']);
+      return new BadRequestException(error['errorInfo']['message']);
     }
   }
 

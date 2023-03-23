@@ -10,6 +10,7 @@ import { AuthService } from './auth/auth.service';
 import { SignUpDto } from './dtos/sign-in.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { EmailDto } from './dtos/email.dto';
 
 @Controller()
 export class AppController {
@@ -33,7 +34,7 @@ export class AppController {
 
   @Post('email-verification')
   @UseGuards(AuthGuard)
-  emailVerification(@Body('email') email: string) {
-    return this.authService.requestEmailVerification(email);
+  emailVerification(@Body() body: EmailDto) {
+    return this.authService.requestEmailVerification(body.email);
   }
 }

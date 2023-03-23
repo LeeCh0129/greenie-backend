@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PageDto } from 'src/auth/dtos/page.dto';
+import { PageDto } from 'src/dtos/page.dto';
 import { Comment } from 'src/entities/comment.entity';
 import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
