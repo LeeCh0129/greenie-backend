@@ -42,7 +42,8 @@ export class AuthService {
     return { message: '로그인 성공' };
   }
 
-  async requestEmailVerification(email: string) {
+  async requestEmailVerification(firebaseId: string) {
+    const { email } = await this.auth.getUser(firebaseId);
     const user = await this.auth.getUserByEmail(email).catch((error) => {
       if (error['errorInfo']['code'] == 'auth/user-not-found') {
         throw new NotFoundException('가입된 회원이 아닙니다.');

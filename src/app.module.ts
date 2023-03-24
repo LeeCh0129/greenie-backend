@@ -45,19 +45,12 @@ import { MailerModule } from '@nestjs-modules/mailer';
         secure: false,
         auth: {
           user: 'mohajistudio@gmail.com',
-          pass: 'hvqppqkyhmnjseaj',
+          pass: process.env.MAILER_PASS,
         },
       },
       defaults: {
         from: '"nest-modules" <modules@nestjs.com>',
       },
-      // template: {
-      //   dir: process.cwd() + '/templates/',
-      //   adapter: new HandlebarsAdapter(),
-      //   options: {
-      //     strict: true,
-      //   },
-      // },
     }),
     TypeOrmModule.forFeature([User, Post, PostLike]),
     PostsModule,

@@ -11,6 +11,7 @@ import { SignUpDto } from './dtos/sign-in.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { EmailDto } from './dtos/email.dto';
+import { User } from './entities/user.entity';
 
 @Controller()
 export class AppController {
@@ -34,7 +35,7 @@ export class AppController {
 
   @Post('email-verification')
   @UseGuards(AuthGuard)
-  emailVerification(@Body() body: EmailDto) {
-    return this.authService.requestEmailVerification(body.email);
+  emailVerification(@CurrentUser() user: User) {
+    return this.authService.requestEmailVerification(user.firebaseId);
   }
 }
