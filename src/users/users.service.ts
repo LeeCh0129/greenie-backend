@@ -20,12 +20,4 @@ export class UsersService {
   async findOne(id: number): Promise<User> {
     return await this.userRepository.findOneBy({ id });
   }
-
-  // async findOne(id: number): Promise<any> {
-  //   return await this.userRepository
-  //     .createQueryBuilder('user')
-  //     .leftJoinAndSelect('user.posts', 'posts')
-  //     .select(['user.id', 'posts.title', 'posts.body'])
-  //     .getMany();
-  // }
 }
