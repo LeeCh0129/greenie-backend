@@ -8,12 +8,9 @@ async function bootstrap() {
   const PORT = process.env.PORT || 3000;
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalInterceptors(new WebhookInterceptor());
   app.enableCors();
-
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-  });
-
+  app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,7 +19,9 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(new WebhookInterceptor());
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+  });
 
   await app.listen(PORT);
 }

@@ -19,7 +19,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ unique: true })
   nickname: string;
 
   @Column({ unique: true, select: false })

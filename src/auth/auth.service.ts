@@ -5,17 +5,18 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import * as firebase from 'firebase-admin';
 import { User } from 'src/entities/user.entity';
 import { FirebaseApp } from 'src/firebase/firebase-app';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   private auth: firebase.auth.Auth;
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectEntityManager() private entityManager: EntityManager,
     private firebaseApp: FirebaseApp,
     private mailerService: MailerService,
   ) {
@@ -79,10 +80,18 @@ export class AuthService {
     password: string,
     nickname: string,
   ): Promise<User> {
-    const exist = await this.userRepository.findOneBy({ email });
-    if (exist) {
+    const existEmail = await this.userRepository.findOneBy({ email });
+    if (existEmail) {
       throw new BadRequestException('이미 존재하는 이메일입니다');
     }
+
+    const existNickname = await this.entityManager.findOneBy(User, {
+      nickname,
+    });
+    if (existNickname != null) {
+      throw new BadRequestException('이미 사용중인 닉네임입니다.');
+    }
+
     const firebaseUser = await this.auth
       .createUser({
         email,
@@ -109,5 +118,19 @@ export class AuthService {
 
   async setId(uid: string, id: number) {
     await this.auth.setCustomUserClaims(uid, { id });
+  }
+
+  async checkNicknameDuplicate(nickname: string) {
+    const user = await this.entityManager.findOne(User, {
+      where: {
+        nickname: nickname,
+      },
+    });
+
+    if (user != null) {
+      throw new BadRequestException('이미 사용중인 닉네임입니다.');
+    }
+
+    return { message: '사용가능한 닉네임입니다.' };
   }
 }
