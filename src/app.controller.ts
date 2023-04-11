@@ -1,17 +1,8 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  UseGuards,
-  Request,
-  Param,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Query } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { SignUpDto } from './dtos/sign-in.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { EmailDto } from './dtos/email.dto';
 import { User } from './entities/user.entity';
 
 @Controller()
@@ -35,7 +26,8 @@ export class AppController {
   }
 
   @Get('check-nickname-duplicate')
-  checkNicknameDuplicate(@Param('nickname') nickname: string) {
+  checkNicknameDuplicate(@Query('nickname') nickname: string) {
+    console.log(nickname);
     return this.authService.checkNicknameDuplicate(nickname);
   }
 

@@ -121,10 +121,12 @@ export class AuthService {
   }
 
   async checkNicknameDuplicate(nickname: string) {
-    const user = await this.entityManager.findOne(User, {
-      where: {
-        nickname: nickname,
-      },
+    if (!nickname) {
+      throw new BadRequestException('닉네임을 입력해주세요.');
+    }
+
+    const user = await this.entityManager.findOneBy(User, {
+      nickname: nickname,
     });
 
     if (user != null) {
