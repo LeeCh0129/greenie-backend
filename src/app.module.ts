@@ -20,7 +20,6 @@ import { PostLike } from './entities/post-like.entity';
 import { Post } from './entities/post.entity';
 import { Comment } from './entities/comment.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -57,7 +56,6 @@ import { EventsModule } from './events/events.module';
     PostsModule,
     UsersModule,
     CommentsModule,
-    EventsModule,
   ],
   controllers: [AppController],
   providers: [AuthService, FirebaseAuthStrategy, FirebaseApp],
