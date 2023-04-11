@@ -5,6 +5,7 @@ import {
   Post,
   UseGuards,
   Request,
+  Param,
 } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { SignUpDto } from './dtos/sign-in.dto';
@@ -31,6 +32,11 @@ export class AppController {
   @Post('signup')
   signUp(@Body() body: SignUpDto) {
     return this.authService.signUp(body.email, body.password, body.nickname);
+  }
+
+  @Get('check-nickname-duplicate')
+  checkNicknameDuplicate(@Param('nickname') nickname: string) {
+    return this.authService.checkNicknameDuplicate(nickname);
   }
 
   @Post('email-verification')
