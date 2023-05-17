@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,6 +12,7 @@ import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from './dtos/create-post.dto';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class PostsService {
@@ -18,6 +20,8 @@ export class PostsService {
     @InjectRepository(Post) private postRepository: Repository<Post>,
     @InjectRepository(PostLike)
     private postLikeRepository: Repository<PostLike>,
+    @Inject('S3_CLIENT')
+    private readonly s3Client: S3Client,
   ) {}
 
   async findAll(page: number, take: number): Promise<PageDto<Post>> {
@@ -134,6 +138,25 @@ export class PostsService {
     }
 
     return { message: '게시글 수정 성공' };
+  }
+
+  async upload(files: Express.Multer.File[]) {
+    const imageUrls: string[] = [];
+    await Promise.all(
+      files.map(async (file: Express.Multer.File) => {
+        const key = 'images/' + Date.now() + file.originalname;
+        await this.s3Client.send(
+          new PutObjectCommand({
+            Bucket: 'greenie-bucket',
+            Key: key,
+            Body: file.buffer,
+          }),
+        );
+        imageUrls.push(key);
+      }),
+    );
+
+    return { imageUrls };
   }
 
   async delete(postId: number, user: User) {

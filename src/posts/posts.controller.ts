@@ -8,7 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  UnsupportedMediaTypeException,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreatePostDto } from './dtos/create-post.dto';
 import { PostsService } from './posts.service';
@@ -18,6 +21,7 @@ import { CreateCommentDto } from './dtos/create-comment.dto';
 import { User } from 'src/entities/user.entity';
 import { CommentsService } from 'src/comments/comments.service';
 import { PaginationDto } from 'src/comments/dtos/find-comment.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('posts')
 export class PostsController {
@@ -39,6 +43,28 @@ export class PostsController {
       createPostDto.title,
       createPostDto.body,
     );
+  }
+
+  @Post('upload')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      fileFilter: (req, file, callback) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+          const err = new UnsupportedMediaTypeException(
+            '잘못된 이미지 타입입니다.',
+          );
+          return callback(err, false);
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  upload(
+    @UploadedFiles()
+    files: Express.Multer.File[],
+  ) {
+    return this.postsService.upload(files);
   }
 
   @Patch(':id')
