@@ -12,7 +12,11 @@ import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from './dtos/create-post.dto';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  CopyObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class PostsService {
@@ -140,16 +144,18 @@ export class PostsService {
     return { message: '게시글 수정 성공' };
   }
 
-  async upload(files: Express.Multer.File[]) {
+  async upload(images: Express.Multer.File[]) {
     const imageUrls: string[] = [];
+
     await Promise.all(
-      files.map(async (file: Express.Multer.File) => {
-        const key = 'images/' + Date.now() + file.originalname;
-        await this.s3Client.send(
+      //만약 중간에 실패하면 어떻게 처리할 것인가?
+      images.map(async (image: Express.Multer.File) => {
+        const key = 'images/' + Date.now() + '-' + image.originalname;
+        this.s3Client.send(
           new PutObjectCommand({
             Bucket: 'greenie-bucket',
             Key: key,
-            Body: file.buffer,
+            Body: image.buffer,
           }),
         );
         imageUrls.push(key);
@@ -157,6 +163,27 @@ export class PostsService {
     );
 
     return { imageUrls };
+  }
+
+  async moveToImage(imageUrls: string[]) {
+    const newImageUrls: string[] = [];
+
+    await Promise.all(
+      imageUrls.map((imageUrl: string) => {
+        const urlSplit = imageUrl.split('/');
+        const key = 'images/' + urlSplit[1];
+        this.s3Client.send(
+          new CopyObjectCommand({
+            Bucket: 'greenie-bucket',
+            CopySource: 'greenie-bucket/' + imageUrl,
+            Key: key,
+          }),
+        );
+        newImageUrls.push(key);
+      }),
+    );
+
+    return newImageUrls;
   }
 
   async delete(postId: number, user: User) {

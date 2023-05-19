@@ -20,7 +20,6 @@ import { PostLike } from './entities/post-like.entity';
 import { Post } from './entities/post.entity';
 import { Comment } from './entities/comment.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -57,7 +56,6 @@ import { UploadModule } from './upload/upload.module';
     PostsModule,
     UsersModule,
     CommentsModule,
-    UploadModule,
   ],
   controllers: [AppController],
   providers: [AuthService, FirebaseAuthStrategy, FirebaseApp],

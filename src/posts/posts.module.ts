@@ -7,12 +7,14 @@ import { Post } from 'src/entities/post.entity';
 import { UsersModule } from 'src/users/users.module';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
+import { UploadModule } from 'src/upload/upload.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, PostLike, Comment]),
     UsersModule,
     CommentsModule,
+    UploadModule,
   ],
   controllers: [PostsController],
   providers: [PostsService],

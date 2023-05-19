@@ -48,7 +48,7 @@ export class PostsController {
   @Post('upload')
   @UseGuards(AuthGuard)
   @UseInterceptors(
-    FilesInterceptor('files', 10, {
+    FilesInterceptor('images', 10, {
       fileFilter: (req, file, callback) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
           const err = new UnsupportedMediaTypeException(
@@ -60,11 +60,17 @@ export class PostsController {
       },
     }),
   )
-  upload(
+  postUpload(
     @UploadedFiles()
-    files: Express.Multer.File[],
+    images: Express.Multer.File[],
   ) {
-    return this.postsService.upload(files);
+    return this.postsService.upload(images);
+  }
+
+  @Patch('upload')
+  // @UseGuards(AuthGuard)
+  patchUpload(@Body('imageUrls') imageUrls: string[]) {
+    return this.postsService.moveToImage(imageUrls);
   }
 
   @Patch(':id')
