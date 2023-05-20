@@ -59,6 +59,6 @@ export class CommentsService {
 
     await this.commentsRepository.save(comment);
 
-    return comment;
+    return { message: '댓글 작성 완료' };
   }
 }
