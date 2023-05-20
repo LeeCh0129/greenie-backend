@@ -68,9 +68,9 @@ export class PostsController {
   }
 
   @Patch('upload')
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   patchUpload(@Body('imageUrls') imageUrls: string[]) {
-    return this.postsService.moveToImage(imageUrls);
+    return this.postsService.copyToImage(imageUrls);
   }
 
   @Patch(':id')

@@ -5,12 +5,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { PageDto } from 'src/dtos/page.dto';
 import { PostLike } from 'src/entities/post-like.entity';
 import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { CreatePostDto } from './dtos/create-post.dto';
 import {
   CopyObjectCommand,
@@ -21,9 +21,10 @@ import {
 @Injectable()
 export class PostsService {
   constructor(
-    @InjectRepository(Post) private postRepository: Repository<Post>,
+    @InjectRepository(Post) private readonly postRepository: Repository<Post>,
     @InjectRepository(PostLike)
-    private postLikeRepository: Repository<PostLike>,
+    private readonly postLikeRepository: Repository<PostLike>,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     @Inject('S3_CLIENT')
     private readonly s3Client: S3Client,
   ) {}
@@ -67,35 +68,39 @@ export class PostsService {
         throw new InternalServerErrorException('게시글 좋아요 조회 실패');
       });
 
-    if (likePost) {
-      await this.postLikeRepository.delete({ id: likePost.id }).catch(() => {
-        throw new InternalServerErrorException('게시글 좋아요 취소 실패');
+    await this.entityManager.transaction(async (transactionEntityManager) => {
+      if (likePost) {
+        await transactionEntityManager
+          .delete(PostLike, { id: likePost.id })
+          .catch(() => {
+            throw new InternalServerErrorException('게시글 좋아요 취소 실패');
+          });
+        await transactionEntityManager
+          .update(Post, post.id, {
+            likeCount: () => 'like_count - 1',
+          })
+          .catch(() => {
+            throw new InternalServerErrorException('게시글 업데이트 실패');
+          });
+        return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
+      }
+
+      const postLike = await transactionEntityManager.create(PostLike, {
+        post: post,
+        user: user,
       });
-      await this.postRepository
-        .update(post.id, {
-          likeCount: () => 'like_count - 1',
+
+      await transactionEntityManager.save(postLike).catch(() => {
+        throw new InternalServerErrorException('게시글 좋아요 저장 실패');
+      });
+      await transactionEntityManager
+        .update(Post, post.id, {
+          likeCount: () => 'like_count + 1',
         })
         .catch(() => {
           throw new InternalServerErrorException('게시글 업데이트 실패');
         });
-      return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
-    }
-
-    const postLike = await this.postLikeRepository.create({
-      post: post,
-      user: user,
     });
-
-    await this.postLikeRepository.save(postLike).catch(() => {
-      throw new InternalServerErrorException('게시글 좋아요 저장 실패');
-    });
-    await this.postRepository
-      .update(post.id, {
-        likeCount: () => 'like_count + 1',
-      })
-      .catch(() => {
-        throw new InternalServerErrorException('게시글 업데이트 실패');
-      });
 
     return { message: '좋아요 성공', likeCount: post.likeCount + 1 };
   }
@@ -162,10 +167,10 @@ export class PostsService {
       }),
     );
 
-    return { imageUrls };
+    return { imageUrls, message: '이미지 저장 성공' };
   }
 
-  async moveToImage(imageUrls: string[]) {
+  async copyToImage(imageUrls: string[]) {
     const newImageUrls: string[] = [];
 
     await Promise.all(
