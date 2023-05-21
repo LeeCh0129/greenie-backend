@@ -26,7 +26,7 @@ export class Post {
   @Column({ default: 0 })
   likeCount: number;
 
-  @ManyToOne(() => User, (user) => user.post)
+  @ManyToOne(() => User, (user) => user.post, { nullable: false })
   author: User;
 
   @OneToMany(() => PostLike, (postLike) => postLike.post)

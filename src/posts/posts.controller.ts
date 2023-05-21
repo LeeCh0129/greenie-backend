@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UnsupportedMediaTypeException,
   UploadedFiles,
   UseGuards,
@@ -16,12 +17,13 @@ import {
 import { CreatePostDto } from './dtos/create-post.dto';
 import { PostsService } from './posts.service';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
-import { AuthGuard } from 'src/guards/auth.guard';
 import { CreateCommentDto } from './dtos/create-comment.dto';
 import { User } from 'src/entities/user.entity';
 import { CommentsService } from 'src/comments/comments.service';
 import { PaginationDto } from 'src/comments/dtos/find-comment.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { PayloadDto } from 'src/dtos/payload.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -31,22 +33,25 @@ export class PostsController {
   ) {}
 
   @Get()
-  findAll(@Query() query: PaginationDto) {
+  findAll(@CurrentUser() user: PayloadDto, @Query() query: PaginationDto) {
     return this.postsService.findAll(query.page, query.take);
   }
 
   @Post()
-  @UseGuards(AuthGuard)
-  create(@CurrentUser() user: User, @Body() createPostDto: CreatePostDto) {
+  @UseGuards(JwtAuthGuard)
+  create(
+    @CurrentUser() user: PayloadDto,
+    @Body() createPostDto: CreatePostDto,
+  ) {
     return this.postsService.create(
-      user,
+      user.id,
       createPostDto.title,
       createPostDto.body,
     );
   }
 
   @Post('upload')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('images', 10, {
       fileFilter: (req, file, callback) => {
@@ -68,37 +73,37 @@ export class PostsController {
   }
 
   @Patch('upload')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   patchUpload(@Body('imageUrls') imageUrls: string[]) {
     return this.postsService.copyToImage(imageUrls);
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   patchPost(
-    @CurrentUser() user: User,
+    @CurrentUser() user: PayloadDto,
     @Param('id', ParseIntPipe) postId: number,
     @Body() body: Partial<CreatePostDto>,
   ) {
-    return this.postsService.update(postId, user, body);
+    return this.postsService.update(postId, user.id, body);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   deletePost(
-    @CurrentUser() user: User,
+    @CurrentUser() user: PayloadDto,
     @Param('id', ParseIntPipe) postId: number,
   ) {
-    return this.postsService.delete(postId, user);
+    return this.postsService.delete(postId, user.id);
   }
 
   @Patch(':id/like')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   likePost(
-    @CurrentUser() user: User,
+    @CurrentUser() user: PayloadDto,
     @Param('id', ParseIntPipe) postId: number,
   ) {
-    return this.postsService.patchLike(user, postId);
+    return this.postsService.patchLike(user.id, postId);
   }
 
   @Get(':id/comments')
@@ -107,14 +112,14 @@ export class PostsController {
   }
 
   @Post(':id/comments')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   createComment(
-    @CurrentUser() user,
+    @CurrentUser() user: PayloadDto,
     @Param('id') postId: string,
     @Body() createCommentDto: CreateCommentDto,
   ) {
     return this.commentsService.create(
-      user,
+      user.id,
       parseInt(postId),
       createCommentDto.content,
       createCommentDto.parentId,

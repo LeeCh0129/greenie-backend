@@ -1,25 +1,18 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { CommentsModule } from './comments/comments.module';
 import { UsersModule } from './users/users.module';
 import { PostsModule } from './posts/posts.module';
-import { AuthService } from './auth/auth.service';
-import { FirebaseAuthStrategy } from './firebase/firebase-auth.strategy';
-import { FirebaseApp } from './firebase/firebase-app';
-import { CurrentUserMiddleware } from './middlewares/current-user.middleware';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { User } from './entities/user.entity';
 import { PostLike } from './entities/post-like.entity';
 import { Post } from './entities/post.entity';
 import { Comment } from './entities/comment.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { AdminModule } from './admin/admin.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -56,15 +49,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
     PostsModule,
     UsersModule,
     CommentsModule,
+    AdminModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AuthService, FirebaseAuthStrategy, FirebaseApp],
+  providers: [],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): any {
-    consumer.apply(CurrentUserMiddleware).forRoutes({
-      path: '/*',
-      method: RequestMethod.ALL,
-    });
-  }
-}
+export class AppModule {}

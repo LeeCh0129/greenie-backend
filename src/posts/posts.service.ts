@@ -49,7 +49,7 @@ export class PostsService {
     return new PageDto<Post>(posts[1], take, posts[0]);
   }
 
-  async patchLike(user: User, postId: number) {
+  async patchLike(userId: number, postId: number) {
     const post = await this.postRepository
       .findOneBy({ id: postId })
       .catch(() => {
@@ -61,7 +61,7 @@ export class PostsService {
 
     const likePost = await this.postLikeRepository
       .createQueryBuilder('post_like')
-      .where('post_like.user_id = :user_id', { user_id: user['id'] })
+      .where('post_like.user_id = :user_id', { user_id: userId })
       .andWhere('post_like.post_id = :post_id', { post_id: postId })
       .getOne()
       .catch(() => {
@@ -85,6 +85,9 @@ export class PostsService {
         return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
       }
 
+      const user = new User();
+      user.id = userId;
+
       const postLike = await transactionEntityManager.create(PostLike, {
         post: post,
         user: user,
@@ -105,8 +108,11 @@ export class PostsService {
     return { message: '좋아요 성공', likeCount: post.likeCount + 1 };
   }
 
-  async create(user: User, title: string, body: string): Promise<Post> {
+  async create(userId: number, title: string, body: string): Promise<Post> {
     try {
+      const user = new User();
+      user.id = userId;
+
       const post = await this.postRepository.create({
         title,
         body,
@@ -120,7 +126,7 @@ export class PostsService {
     }
   }
 
-  async update(postId: number, user: User, body: Partial<CreatePostDto>) {
+  async update(postId: number, userId: number, body: Partial<CreatePostDto>) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null },
       relations: { author: true },
@@ -133,10 +139,12 @@ export class PostsService {
         },
       },
     });
+
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다');
     }
-    if (post.author.id !== user.id) {
+
+    if (post.author.id !== userId) {
       throw new BadRequestException('작성자만 게시글을 수정할 수 있습니다');
     }
 
@@ -191,7 +199,7 @@ export class PostsService {
     return newImageUrls;
   }
 
-  async delete(postId: number, user: User) {
+  async delete(postId: number, userId: number) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null },
       relations: { author: true },
@@ -203,11 +211,10 @@ export class PostsService {
         },
       },
     });
-    console.log(post);
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다');
     }
-    if (post.author.id !== user.id) {
+    if (post.author.id !== userId) {
       throw new BadRequestException('작성자만 게시글을 삭제할 수 있습니다');
     }
     try {
@@ -215,7 +222,6 @@ export class PostsService {
     } catch (e) {
       throw new InternalServerErrorException('게시글 삭제에 실패했습니다.');
     }
-    console.log('게시글 삭제 성공');
 
     return { message: '게시글 삭제 성공' };
   }

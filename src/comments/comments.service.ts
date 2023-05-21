@@ -34,7 +34,7 @@ export class CommentsService {
   }
 
   async create(
-    author: User,
+    authorId: number,
     postId: number,
     content: string,
     parentId: number | undefined,
@@ -48,6 +48,9 @@ export class CommentsService {
 
     const post = new Post();
     post.id = postId;
+
+    const author = new User();
+    author.id = authorId;
 
     const comment = this.commentsRepository.create({
       author,

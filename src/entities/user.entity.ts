@@ -10,6 +10,7 @@ import {
 import { Comment } from './comment.entity';
 import { PostLike } from './post-like.entity';
 import { Post } from './post.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class User {
@@ -19,11 +20,15 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column()
+  @Exclude()
+  password: string;
+
+  @Column()
+  emailVerified: boolean;
+
   @Column({ unique: true })
   nickname: string;
-
-  @Column({ unique: true, select: false })
-  firebaseId: string;
 
   @OneToMany(() => Post, (post) => post.author)
   post: Post[];
