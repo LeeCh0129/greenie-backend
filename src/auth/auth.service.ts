@@ -1,9 +1,9 @@
-import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
@@ -15,15 +15,13 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
     @InjectEntityManager() private entityManager: EntityManager,
     private jwtService: JwtService,
-    private mailerService: MailerService,
     private configService: ConfigService,
   ) {}
 
   async login(email: string, password: string): Promise<object> {
-    const user = await this.userRepository.findOne({
+    const user = await this.entityManager.findOne(User, {
       where: { email },
     });
 
@@ -37,14 +35,15 @@ export class AuthService {
       throw new BadRequestException('잘못된 비밀번호입니다');
     }
 
-    const accessToken = this.jwtService.sign({
-      id: user.id,
-      email,
-      nickname: user.nickname,
-      emailVerified: user.emailVerified,
-    });
+    if (user.emailVerified !== true) {
+      throw new ForbiddenException('이메일 인증을 진행해주세요');
+    }
 
-    return { message: '로그인 성공', accessToken };
+    const accessToken = this.generateAccessToken(user);
+
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    return { message: '로그인 성공', accessToken, refreshToken };
   }
 
   async requestEmailVerification(firebaseId: string) {
@@ -80,7 +79,9 @@ export class AuthService {
     password: string,
     nickname: string,
   ): Promise<User> {
-    const existEmail = await this.userRepository.exist({ where: { email } });
+    const existEmail = await this.entityManager.exists(User, {
+      where: { email },
+    });
     if (existEmail) {
       throw new BadRequestException('이미 존재하는 이메일입니다');
     }
@@ -92,16 +93,14 @@ export class AuthService {
       throw new BadRequestException('이미 사용중인 닉네임입니다.');
     }
 
-    console.log(password);
     const encryptedPassword = await this.encryptPassword(password);
-    console.log(encryptedPassword);
-    const user = this.userRepository.create({
+    const user = this.entityManager.create(User, {
       email,
       nickname,
       password: encryptedPassword,
     });
 
-    await this.userRepository.save(user);
+    await this.entityManager.save(user);
 
     return user;
   }
@@ -130,5 +129,60 @@ export class AuthService {
     );
 
     return bcrypt.hashSync(password, salt);
+  }
+
+  generateAccessToken(user: User): string {
+    return this.jwtService.sign(user, {
+      expiresIn: '1h',
+    });
+  }
+
+  async generateRefreshToken(userId: number): Promise<string> {
+    const payload = { sub: userId };
+
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+    });
+
+    await this.entityManager.update(User, userId, {
+      refreshToken: refreshToken,
+    });
+
+    return refreshToken;
+  }
+
+  async generateAccessTokenFromRefreshToken(
+    userId: number,
+    refreshToken: string,
+  ): Promise<string> {
+    try {
+      const user = await this.verifyRefreshToken(userId, refreshToken);
+
+      //Todo refreshToken도 재발급하게 해야됨
+      return this.generateAccessToken(user);
+    } catch (error) {
+      throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
+    }
+  }
+
+  async verifyRefreshToken(userId: number, token: string): Promise<User> {
+    try {
+      const user = await this.entityManager.findOneBy(User, { id: userId });
+
+      if (user! || user.refreshToken !== token) {
+        throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
+      }
+
+      const isVerified = this.jwtService.verify(token);
+
+      if (isVerified !== true) {
+        throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
+      }
+
+      return user;
+    } catch (e) {
+      throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
+    }
   }
 }

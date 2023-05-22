@@ -30,6 +30,9 @@ export class User {
   @Column({ unique: true })
   nickname: string;
 
+  @Column({ unique: true })
+  refreshToken: string;
+
   @OneToMany(() => Post, (post) => post.author)
   post: Post[];
 

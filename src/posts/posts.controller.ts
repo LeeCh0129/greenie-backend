@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UnsupportedMediaTypeException,
   UploadedFiles,
   UseGuards,
@@ -18,7 +17,6 @@ import { CreatePostDto } from './dtos/create-post.dto';
 import { PostsService } from './posts.service';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { CreateCommentDto } from './dtos/create-comment.dto';
-import { User } from 'src/entities/user.entity';
 import { CommentsService } from 'src/comments/comments.service';
 import { PaginationDto } from 'src/comments/dtos/find-comment.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
