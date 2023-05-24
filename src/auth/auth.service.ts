@@ -2,13 +2,14 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 
@@ -46,7 +47,22 @@ export class AuthService {
     return { message: '로그인 성공', accessToken, refreshToken };
   }
 
-  async requestEmailVerification(firebaseId: string) {
+  async requestEmailVerification(email: string) {
+    const user = await this.entityManager.exists(User, { where: { email } });
+
+    if (!user) {
+      throw new NotFoundException('존재하지 않는 이메일입니다.');
+    }
+
+    await this.entityManager.update(
+      User,
+      { email },
+      {
+        emailVerified: true,
+      },
+    );
+
+    return '임시 이메일 인증 완료';
     // const { email } = await this.auth.getUser(firebaseId);
     // const user = await this.auth.getUserByEmail(email).catch((error) => {
     //   if (error['errorInfo']['code'] == 'auth/user-not-found') {
@@ -93,7 +109,7 @@ export class AuthService {
       throw new BadRequestException('이미 사용중인 닉네임입니다.');
     }
 
-    const encryptedPassword = await this.encryptPassword(password);
+    const encryptedPassword = await this.encrypt(password);
     const user = this.entityManager.create(User, {
       email,
       nickname,
@@ -103,6 +119,15 @@ export class AuthService {
     await this.entityManager.save(user);
 
     return user;
+  }
+
+  async getRefreshToken(userId: number, refreshToken: string) {
+    const isVerified = await this.verifyRefreshToken(userId, refreshToken);
+    if (!isVerified) {
+      throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
+    }
+
+    return { refreshToken: await this.generateRefreshToken(userId) };
   }
 
   async checkNicknameDuplicate(nickname: string) {
@@ -123,7 +148,7 @@ export class AuthService {
     return { message: '사용가능한 닉네임입니다.' };
   }
 
-  async encryptPassword(password: string): Promise<string> {
+  async encrypt(password: string): Promise<string> {
     const salt = await bcrypt.genSalt(
       parseInt(this.configService.get<string>('SALT_OR_ROUNDS')),
     );
@@ -132,7 +157,8 @@ export class AuthService {
   }
 
   generateAccessToken(user: User): string {
-    return this.jwtService.sign(user, {
+    return this.jwtService.sign(JSON.parse(JSON.stringify(user)), {
+      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
       expiresIn: '1h',
     });
   }
@@ -140,43 +166,56 @@ export class AuthService {
   async generateRefreshToken(userId: number): Promise<string> {
     const payload = { sub: userId };
 
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-    });
+    const refreshToken = this.jwtService.sign(
+      JSON.parse(JSON.stringify(payload)),
+      {
+        expiresIn: '7d',
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      },
+    );
+
+    const encryptedRefreshToken = await this.encrypt(refreshToken);
 
     await this.entityManager.update(User, userId, {
-      refreshToken: refreshToken,
+      refreshToken: encryptedRefreshToken,
     });
 
     return refreshToken;
   }
 
-  async generateAccessTokenFromRefreshToken(
+  async generateTokenFromRefreshToken(
     userId: number,
     refreshToken: string,
-  ): Promise<string> {
+  ): Promise<object> {
     try {
       const user = await this.verifyRefreshToken(userId, refreshToken);
 
-      //Todo refreshToken도 재발급하게 해야됨
-      return this.generateAccessToken(user);
+      const generatedAccessToken = this.generateAccessToken(user);
+
+      return {
+        accessToken: generatedAccessToken,
+      };
     } catch (error) {
       throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
     }
   }
 
-  async verifyRefreshToken(userId: number, token: string): Promise<User> {
+  async verifyRefreshToken(
+    userId: number,
+    refreshToken: string,
+  ): Promise<User> {
     try {
       const user = await this.entityManager.findOneBy(User, { id: userId });
 
-      if (user! || user.refreshToken !== token) {
+      if (!user || !(await bcrypt.compare(refreshToken, user.refreshToken))) {
         throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
       }
 
-      const isVerified = this.jwtService.verify(token);
+      const isVerified = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      });
 
-      if (isVerified !== true) {
+      if (!isVerified) {
         throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
       }
 

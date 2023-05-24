@@ -24,7 +24,7 @@ export class User {
   @Exclude()
   password: string;
 
-  @Column()
+  @Column({ default: false })
   emailVerified: boolean;
 
   @Column({ unique: true })

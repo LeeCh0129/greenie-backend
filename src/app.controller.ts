@@ -26,13 +26,13 @@ export class AppController {
   }
 
   @Post('login')
-  signIn(@Body() body: LoginDto) {
+  login(@Body() body: LoginDto) {
     return this.authService.login(body.email, body.password);
   }
 
   @Post('register')
   @UseInterceptors(ClassSerializerInterceptor)
-  signUp(@Body() body: RegisterDto) {
+  register(@Body() body: RegisterDto) {
     return this.authService.register(body.email, body.password, body.nickname);
   }
 
@@ -41,9 +41,17 @@ export class AppController {
     return this.authService.checkNicknameDuplicate(nickname);
   }
 
-  @Post('email-verification')
+  @Get('refresh-token')
   @UseGuards(JwtAuthGuard)
-  emailVerification(@CurrentUser() user: PayloadDto) {
-    // return this.authService.requestEmailVerification(user.firebaseId);
+  getRefreshToken(
+    @Body('refreshToken') refreshToken: string,
+    @CurrentUser() user,
+  ) {
+    return this.authService.getRefreshToken(user.id, refreshToken);
+  }
+
+  @Post('email-verification')
+  emailVerification(@Body('email') email: string) {
+    return this.authService.requestEmailVerification(email);
   }
 }

@@ -48,7 +48,7 @@ export class PostsController {
     );
   }
 
-  @Post('upload')
+  @Post('images')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('images', 10, {
@@ -70,7 +70,7 @@ export class PostsController {
     return this.postsService.upload(images);
   }
 
-  @Patch('upload')
+  @Patch('images')
   @UseGuards(JwtAuthGuard)
   patchUpload(@Body('imageUrls') imageUrls: string[]) {
     return this.postsService.copyToImage(imageUrls);
