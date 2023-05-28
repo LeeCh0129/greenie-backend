@@ -141,7 +141,7 @@ export class AuthService {
       },
     });
 
-    if (user != null) {
+    if (user) {
       throw new BadRequestException('이미 사용중인 닉네임입니다.');
     }
 
