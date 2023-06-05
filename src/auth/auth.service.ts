@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,6 +11,8 @@ import { User } from 'src/entities/user.entity';
 import { EntityManager } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import { PayloadDto } from 'src/dtos/payload.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
@@ -121,13 +122,31 @@ export class AuthService {
     return user;
   }
 
-  async getRefreshToken(userId: number, refreshToken: string) {
-    const isVerified = await this.verifyRefreshToken(userId, refreshToken);
-    if (!isVerified) {
+  async refreshingToken(refreshToken: string) {
+    const payload = this.jwtService.decode(refreshToken);
+
+    const user = await this.verifyRefreshToken(payload['sub'], refreshToken);
+
+    if (!user) {
       throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
     }
 
-    return { refreshToken: await this.generateRefreshToken(userId) };
+    const tokenExp = new Date(payload['exp'] * 1000);
+    const now = new Date();
+
+    const timeDifference = Math.floor(
+      (tokenExp.getTime() - now.getTime()) / 1000 / 60 / 60 / 24,
+    );
+
+    let newRefreshToken = null;
+
+    if (timeDifference < 30) {
+      newRefreshToken = await this.generateRefreshToken(user.id);
+    }
+
+    const accessToken = this.generateAccessToken(user);
+
+    return { accessToken, refreshToken: newRefreshToken };
   }
 
   async checkNicknameDuplicate(nickname: string) {
@@ -157,10 +176,19 @@ export class AuthService {
   }
 
   generateAccessToken(user: User): string {
-    return this.jwtService.sign(JSON.parse(JSON.stringify(user)), {
-      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-      expiresIn: '1h',
-    });
+    return this.jwtService.sign(
+      JSON.parse(
+        JSON.stringify({
+          id: user.id,
+          email: user.email,
+          nickname: user.nickname,
+        }),
+      ),
+      {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+        expiresIn: '1h',
+      },
+    );
   }
 
   async generateRefreshToken(userId: number): Promise<string> {
@@ -169,7 +197,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(
       JSON.parse(JSON.stringify(payload)),
       {
-        expiresIn: '7d',
+        expiresIn: '30d',
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       },
     );
@@ -181,23 +209,6 @@ export class AuthService {
     });
 
     return refreshToken;
-  }
-
-  async generateTokenFromRefreshToken(
-    userId: number,
-    refreshToken: string,
-  ): Promise<object> {
-    try {
-      const user = await this.verifyRefreshToken(userId, refreshToken);
-
-      const generatedAccessToken = this.generateAccessToken(user);
-
-      return {
-        accessToken: generatedAccessToken,
-      };
-    } catch (error) {
-      throw new UnauthorizedException('Refresh Token이 유효하지 않습니다');
-    }
   }
 
   async verifyRefreshToken(

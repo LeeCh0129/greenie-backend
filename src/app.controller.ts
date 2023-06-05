@@ -42,12 +42,8 @@ export class AppController {
   }
 
   @Get('refresh-token')
-  @UseGuards(JwtAuthGuard)
-  getRefreshToken(
-    @Body('refreshToken') refreshToken: string,
-    @CurrentUser() user,
-  ) {
-    return this.authService.getRefreshToken(user.id, refreshToken);
+  getRefreshToken(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshingToken(refreshToken);
   }
 
   @Post('email-verification')

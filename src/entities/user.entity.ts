@@ -24,13 +24,13 @@ export class User {
   @Exclude()
   password: string;
 
-  @Column({ default: false })
+  @Column({ default: false, name: 'email_verified' })
   emailVerified: boolean;
 
   @Column({ unique: true })
   nickname: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, name: 'refresh_token' })
   refreshToken: string;
 
   @OneToMany(() => Post, (post) => post.author)
@@ -42,12 +42,12 @@ export class User {
   @OneToMany(() => Comment, (comment) => comment.author)
   comment: Comment[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 }
