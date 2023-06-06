@@ -134,7 +134,7 @@ export class AuthService {
     }
   }
 
-  async refreshingToken(refreshToken: string) {
+  async refreshingToken(refreshToken: string): Promise<LoginResponseDto> {
     const payload = this.decodeToken(refreshToken);
 
     if (!payload) {
@@ -156,7 +156,7 @@ export class AuthService {
 
     let newRefreshToken = null;
 
-    if (timeDifference < 30) {
+    if (timeDifference < 14) {
       newRefreshToken = await this.generateRefreshToken(verifyUser.id);
     }
 

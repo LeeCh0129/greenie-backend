@@ -3,7 +3,9 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -21,6 +23,7 @@ export class User {
   id: number;
 
   @Column({ unique: true })
+  @ApiProperty({ description: 'email', default: 'test@test.com' })
   email: string;
 
   @Column()
@@ -28,12 +31,14 @@ export class User {
   password: string;
 
   @Column({ default: false, name: 'email_verified' })
+  @ApiProperty({ description: 'emailVerified' })
   emailVerified: boolean;
 
   @Column({ unique: true })
+  @ApiProperty({ description: 'nickname', default: '송눈섭' })
   nickname: string;
 
-  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  @OneToOne(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshToken: RefreshToken;
 
   @OneToMany(() => Post, (post) => post.author)

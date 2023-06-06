@@ -6,7 +6,6 @@ import {
   Query,
   UseInterceptors,
   ClassSerializerInterceptor,
-  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { RegisterDto } from './dtos/register.dto';
@@ -56,6 +55,10 @@ export class AppController {
 
   @Get('check-nickname-duplicate')
   @ApiOperation({ summary: '닉네임 중복 체크', description: '' })
+  @ApiResponse({
+    status: 200,
+    description: '중복된 닉네임 없음',
+  })
   checkNicknameDuplicate(@Query('nickname') nickname: string) {
     return this.authService.checkNicknameDuplicate(nickname);
   }
@@ -63,17 +66,24 @@ export class AppController {
   @Get('refresh-token')
   @ApiBearerAuth()
   @ApiOperation({ summary: '토큰 재발급', description: '' })
+  @ApiResponse({
+    status: 200,
+    description: '토큰 재발급 성공',
+    type: LoginResponseDto,
+  })
   getRefreshToken(
-    @Query('refreshToken')
+    @Query('token')
     refreshToken: string,
-    @Req() req: Express.Request,
   ) {
-    console.log(req);
     return this.authService.refreshingToken(refreshToken);
   }
 
   @Post('email-verification')
   @ApiOperation({ summary: '이메일 인증', description: '' })
+  @ApiResponse({
+    status: 201,
+    description: '이메일 인증 요청 성공',
+  })
   emailVerification(@Body() emailDto: EmailDto) {
     return this.authService.requestEmailVerification(emailDto.email);
   }
