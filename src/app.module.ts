@@ -13,6 +13,7 @@ import { Comment } from './entities/comment.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { RefreshToken } from './entities/refresh-token-entity';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { AuthModule } from './auth/auth.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       synchronize: true,
-      entities: [User, Post, PostLike, Comment],
+      entities: [User, Post, PostLike, Comment, RefreshToken],
       namingStrategy: new SnakeNamingStrategy(),
     }),
     MailerModule.forRoot({

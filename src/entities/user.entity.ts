@@ -11,9 +11,12 @@ import { Comment } from './comment.entity';
 import { PostLike } from './post-like.entity';
 import { Post } from './post.entity';
 import { Exclude } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { RefreshToken } from './refresh-token-entity';
 
 @Entity()
 export class User {
+  @ApiProperty({ description: 'id' })
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -30,8 +33,8 @@ export class User {
   @Column({ unique: true })
   nickname: string;
 
-  @Column({ unique: true, name: 'refresh_token' })
-  refreshToken: string;
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refreshToken: RefreshToken;
 
   @OneToMany(() => Post, (post) => post.author)
   post: Post[];
@@ -43,11 +46,14 @@ export class User {
   comment: Comment[];
 
   @CreateDateColumn({ name: 'created_at' })
+  @Exclude()
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
+  @Exclude()
   updatedAt: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
+  @Exclude()
   deletedAt: Date;
 }
