@@ -67,31 +67,15 @@ export class AuthService {
     );
 
     return '임시 이메일 인증 완료';
-    // const { email } = await this.auth.getUser(firebaseId);
-    // const user = await this.auth.getUserByEmail(email).catch((error) => {
-    //   if (error['errorInfo']['code'] == 'auth/user-not-found') {
-    //     throw new NotFoundException('가입된 회원이 아닙니다.');
-    //   }
-    //   throw new InternalServerErrorException(
-    //     '유저 데이터를 불러오는데 실패했습니다.',
-    //   );
-    // });
-    // if (user.emailVerified) {
-    //   throw new BadRequestException('이미 인증된 이메일입니다.');
-    // }
-    // try {
-    //   const emailLink = await this.auth.generateEmailVerificationLink(email);
-    //   await this.mailerService.sendMail({
-    //     from: '모하지스튜디오 그리니 <mohajistudio@gmail.com>',
-    //     to: email,
-    //     subject: '[그리니] 이메일 유효성 검사',
-    //     html: `<h4>안녕하세요, 그리니 이메일 유효성 검사를 위한 메일입니다.</h4>
-    //     <a href="${emailLink}"> 여기를 클릭해주세요 </a>`,
-    //   });
-    //   return { message: '이메일 인증을 완료해주세요' };
-    // } catch (error) {
-    //   return new BadRequestException(error['errorInfo']['message']);
-    // }
+  }
+
+  async checkEmailVerification(email: string) {
+    const user = await this.entityManager.findOne(User, {
+      where: { email },
+      select: { emailVerified: true },
+    });
+
+    return { emailVerified: user.emailVerified };
   }
 
   async register(
