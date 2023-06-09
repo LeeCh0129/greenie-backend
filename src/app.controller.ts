@@ -53,13 +53,13 @@ export class AppController {
     return this.authService.register(body.email, body.password, body.nickname);
   }
 
-  @Get('check-nickname-duplicate')
+  @Get('nickname-duplicate')
   @ApiOperation({ summary: '닉네임 중복 체크', description: '' })
   @ApiResponse({
     status: 200,
     description: '중복된 닉네임 없음',
   })
-  checkNicknameDuplicate(@Query('nickname') nickname: string) {
+  nicknameDuplicate(@Query('nickname') nickname: string) {
     return this.authService.checkNicknameDuplicate(nickname);
   }
 
@@ -79,12 +79,22 @@ export class AppController {
   }
 
   @Post('email-verification')
-  @ApiOperation({ summary: '이메일 인증', description: '' })
+  @ApiOperation({ summary: '이메일 인증 요청', description: '' })
   @ApiResponse({
     status: 201,
     description: '이메일 인증 요청 성공',
   })
-  emailVerification(@Body() emailDto: EmailDto) {
+  postEmailVerification(@Query() emailDto: EmailDto) {
     return this.authService.requestEmailVerification(emailDto.email);
+  }
+
+  @Get('email-verification')
+  @ApiOperation({ summary: '이메일 인증 조회', description: '' })
+  @ApiResponse({
+    status: 200,
+    description: '이메일 인증 조회 성공',
+  })
+  getEmailVerification(@Query() emailDto: EmailDto) {
+    return this.authService.checkEmailVerification(emailDto.email);
   }
 }
