@@ -6,6 +6,7 @@ import {
   Query,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { RegisterDto } from './dtos/register.dto';
@@ -19,6 +20,9 @@ import {
 import { EmailDto } from './dtos/email.dto';
 import { LoginResponseDto } from './dtos/login-response.dto';
 import { User } from './entities/user.entity';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { PayloadDto } from './dtos/payload.dto';
+import { JwtAuthGuard } from './auth/jwt/jwt.guard';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -51,6 +55,18 @@ export class AppController {
   @ApiOperation({ summary: '회원가입', description: '' })
   register(@Body() body: RegisterDto): Promise<User> {
     return this.authService.register(body.email, body.password, body.nickname);
+  }
+
+  @Get('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '로그아웃', description: '' })
+  @ApiResponse({
+    status: 200,
+    description: '로그아웃 성공',
+  })
+  logout(@CurrentUser() user: PayloadDto) {
+    return this.authService.logout(user.id);
   }
 
   @Get('nickname-duplicate')

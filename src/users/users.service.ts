@@ -9,15 +9,11 @@ export class UsersService {
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
 
-  async whoami(id: number): Promise<User> {
+  async findById(id: number): Promise<User> {
     return await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :id', { id })
       .leftJoinAndSelect('user.post', 'post')
       .getOne();
-  }
-
-  async findById(id: number): Promise<User> {
-    return await this.userRepository.findOneBy({ id });
   }
 }

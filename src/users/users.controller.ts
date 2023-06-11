@@ -1,18 +1,11 @@
 import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
-import { CurrentUser } from '../decorators/current-user.decorator';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { PayloadDto } from 'src/dtos/payload.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('users')
+@ApiTags('유저')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  whoami(@CurrentUser() user: PayloadDto) {
-    return this.usersService.whoami(user['id']);
-  }
 
   @Get(':id')
   findById(@Param('id') id: string) {

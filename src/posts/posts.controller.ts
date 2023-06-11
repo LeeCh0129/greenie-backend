@@ -22,8 +22,10 @@ import { PaginationDto } from 'src/comments/dtos/find-comment.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { PayloadDto } from 'src/dtos/payload.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('posts')
+@ApiTags('게시글')
 export class PostsController {
   constructor(
     private postsService: PostsService,

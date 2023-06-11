@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -49,6 +50,12 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async logout(userId: number): Promise<void> {
+    await this.entityManager.delete(RefreshToken, {
+      user: userId,
+    });
   }
 
   async requestEmailVerification(email: string) {
