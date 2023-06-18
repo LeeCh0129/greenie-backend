@@ -108,14 +108,14 @@ export class PostsService {
     return { message: '좋아요 성공', likeCount: post.likeCount + 1 };
   }
 
-  async create(userId: number, title: string, body: string): Promise<Post> {
+  async create(userId: number, title: string, content: string): Promise<Post> {
     try {
       const user = new User();
       user.id = userId;
 
       const post = await this.postRepository.create({
         title,
-        body,
+        content,
         author: user,
       });
 
@@ -126,14 +126,18 @@ export class PostsService {
     }
   }
 
-  async update(postId: number, userId: number, body: Partial<CreatePostDto>) {
+  async update(
+    postId: number,
+    userId: number,
+    content: Partial<CreatePostDto>,
+  ) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null },
       relations: { author: true },
       select: {
         id: true,
         title: true,
-        body: true,
+        content: true,
         author: {
           id: true,
         },
@@ -149,7 +153,7 @@ export class PostsService {
     }
 
     try {
-      await this.postRepository.update(postId, body);
+      await this.postRepository.update(postId, content);
     } catch (e) {
       throw new InternalServerErrorException('게시글 업데이트에 실패했습니다');
     }
@@ -157,13 +161,13 @@ export class PostsService {
     return { message: '게시글 수정 성공' };
   }
 
-  async upload(images: Express.Multer.File[]) {
+  async upload(images: Express.Multer.File[], userId: number) {
     const imageUrls: string[] = [];
 
     await Promise.all(
       //만약 중간에 실패하면 어떻게 처리할 것인가?
       images.map(async (image: Express.Multer.File) => {
-        const key = 'images/' + Date.now() + '-' + image.originalname;
+        const key = 'images/' + Date.now() + '-' + userId;
         this.s3Client.send(
           new PutObjectCommand({
             Bucket: 'greenie-bucket',

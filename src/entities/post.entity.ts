@@ -20,8 +20,8 @@ export class Post {
   @Column({ length: 30 })
   title: string;
 
-  @Column('text')
-  body: string;
+  @Column({ type: 'text', nullable: false })
+  content: string;
 
   @Column({ default: 0 })
   likeCount: number;

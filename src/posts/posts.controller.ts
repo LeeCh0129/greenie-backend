@@ -68,8 +68,10 @@ export class PostsController {
   postUpload(
     @UploadedFiles()
     images: Express.Multer.File[],
+    @CurrentUser()
+    user: PayloadDto,
   ) {
-    return this.postsService.upload(images);
+    return this.postsService.upload(images, user.id);
   }
 
   @Patch('images')
