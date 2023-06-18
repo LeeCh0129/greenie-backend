@@ -123,13 +123,12 @@ export class AuthService {
     const otp = generateOTP();
     const user = await this.entityManager.findOne(User, { where: { email } });
 
-    if (user) {
-      user.otp = otp;
-      user.otpCreatedAt = new Date();
-      await this.entityManager.save(user);
-    } else {
+    if (!user) {
       throw new NotFoundException('해당 유저를 찾을 수 없습니다.');
     }
+    user.otp = otp;
+    user.otpCreatedAt = new Date();
+    await this.entityManager.save(user);
 
     await this.mailService.sendMail({
       to: email,
@@ -175,7 +174,7 @@ export class AuthService {
     });
   }
 
-  async verifyOtp(email: string, otp: string): Promise<boolean> {
+  async verifyOtp(email: string, otp: string): Promise<void> {
     const user = await this.entityManager.findOne(User, {
       where: { email },
     });
@@ -188,17 +187,11 @@ export class AuthService {
     const otpExpiryTime =
       (now.getTime() - user.otpCreatedAt.getTime()) / (1000 * 60);
 
-    if (user.otp === otp && otpExpiryTime <= 5) {
-      user.otpCreatedAt = now;
-      user.otpVerified = true;
-      await this.entityManager.save(user);
-      return true;
-    } else if (user.otp !== otp) {
-      throw new UnauthorizedException('유효하지 않은 OTP 입니다.');
-    } else if (otpExpiryTime > 5) {
-      throw new UnauthorizedException('OTP가 만료되었습니다.');
+    if (!(user.otp === otp && otpExpiryTime <= 5)) {
+      throw new BadRequestException('유효하지 않은 OTP 입니다.');
     }
-    return false;
+    user.emailVerified = true;
+    await this.entityManager.save(user);
   }
 
   decodeToken(token: string) {
