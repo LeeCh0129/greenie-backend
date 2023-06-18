@@ -94,8 +94,8 @@ export class AppController {
     return this.authService.refreshingToken(refreshToken);
   }
 
-  @Post('otp-emails')
-  otpEmailProvider(@Body('email') email: string) {
+  @Get('otp-verification')
+  getOtp(@Body('email') email: string) {
     return this.authService.sendOtpEmail(email);
   }
 
