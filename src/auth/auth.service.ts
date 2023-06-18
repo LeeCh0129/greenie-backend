@@ -14,6 +14,8 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { LoginResponseDto } from 'src/dtos/login-response.dto';
 import { RefreshToken } from 'src/entities/refresh-token-entity';
+import { generateOTP } from 'src/utils/generate-otp.util';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +23,7 @@ export class AuthService {
     @InjectEntityManager() private entityManager: EntityManager,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailerService,
   ) {}
 
   async login(email: string, password: string): Promise<LoginResponseDto> {
@@ -114,6 +117,88 @@ export class AuthService {
     await this.entityManager.save(user);
 
     return user;
+  }
+
+  async sendOtpEmail(email: string): Promise<void> {
+    const otp = generateOTP();
+    const user = await this.entityManager.findOne(User, { where: { email } });
+
+    if (user) {
+      user.otp = otp;
+      user.otpCreatedAt = new Date();
+      await this.entityManager.save(user);
+    } else {
+      throw new NotFoundException('해당 유저를 찾을 수 없습니다.');
+    }
+
+    await this.mailService.sendMail({
+      to: email,
+      from: 'mohajistudio@gmail.com',
+      subject: 'Greenie OTP for authentication',
+      html: `
+    <html>
+      <head>
+        <style>
+          /* Add CSS styles here */
+          body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+          }
+          .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          }
+          h1 {
+            color: #333333;
+          }
+          .otp-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Greenie Community</h1>
+          <p>Thank you for using Greenie! Please find your OTP below:</p>
+          <p class="otp-code">${otp}</p>
+        </div>
+      </body>
+    </html>
+  `,
+    });
+  }
+
+  async verifyOtp(email: string, otp: string): Promise<boolean> {
+    const user = await this.entityManager.findOne(User, {
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('유저를 찾을 수 없습니다.');
+    }
+
+    const now = new Date();
+    const otpExpiryTime =
+      (now.getTime() - user.otpCreatedAt.getTime()) / (1000 * 60);
+
+    if (user.otp === otp && otpExpiryTime <= 5) {
+      user.otpCreatedAt = now;
+      user.otpVerified = true;
+      await this.entityManager.save(user);
+      return true;
+    } else if (user.otp !== otp) {
+      throw new UnauthorizedException('유효하지 않은 OTP 입니다.');
+    } else if (otpExpiryTime > 5) {
+      throw new UnauthorizedException('OTP가 만료되었습니다.');
+    }
+    return false;
   }
 
   decodeToken(token: string) {

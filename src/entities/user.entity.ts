@@ -61,4 +61,14 @@ export class User {
   @DeleteDateColumn({ name: 'deleted_at' })
   @Exclude()
   deletedAt: Date;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  otpCreatedAt: Date;
+
+  @Column({ nullable: true })
+  otp: string;
+
+  @Column({ default: false, name: 'otp_verified' })
+  @ApiProperty({ description: 'otpVerified' })
+  otpVerified: boolean;
 }

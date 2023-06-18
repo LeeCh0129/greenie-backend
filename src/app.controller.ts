@@ -94,6 +94,16 @@ export class AppController {
     return this.authService.refreshingToken(refreshToken);
   }
 
+  @Post('send-otp-email')
+  snedOtpEmail(@Body('email') email: string) {
+    return this.authService.sendOtpEmail(email);
+  }
+
+  @Post('otp-verification')
+  requestOtpVerification(@Body() body: { email: string; otp: string }) {
+    return this.authService.verifyOtp(body.email, body.otp);
+  }
+
   @Post('email-verification')
   @ApiOperation({ summary: '이메일 인증 요청', description: '' })
   @ApiResponse({
