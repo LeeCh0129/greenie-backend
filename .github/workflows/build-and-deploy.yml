@@ -32,7 +32,6 @@ jobs:
           username: ${{ secrets.NAS_USERNAME }}
           password: ${{ secrets.NAS_PASSWORD }}
           script: |
-            /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker pull ${{ secrets.DOCKER_USERNAME }}/greenie:latest
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker stop greenie || true
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm greenie || true
             /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run -d \
@@ -53,5 +52,5 @@ jobs:
               -e PORT=${{ secrets.PORT }} \
               --name greenie \
               -p 3000:3000 \
-              -v /share/CACHEDEV1_DATA/Container/app:/app
+              -v /share/CACHEDEV1_DATA/Container/app:/app \
               ${{ secrets.DOCKER_USERNAME }}/greenie:latest
