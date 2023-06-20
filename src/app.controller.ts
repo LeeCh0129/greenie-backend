@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { RegisterDto } from './dtos/register.dto';
@@ -23,6 +24,7 @@ import { User } from './entities/user.entity';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { PayloadDto } from './dtos/payload.dto';
 import { JwtAuthGuard } from './auth/jwt/jwt.guard';
+import { OtpDto } from './dtos/otp.dto';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -94,14 +96,14 @@ export class AppController {
     return this.authService.refreshingToken(refreshToken);
   }
 
-  @Get('otp-verification')
-  getOtp(@Body('email') email: string) {
-    return this.authService.sendOtpEmail(email);
+  @Post('otp-verification')
+  sendOtp(@Body() emailDto: EmailDto) {
+    return this.authService.sendOtpEmail(emailDto.email);
   }
 
-  @Post('otp-verification')
-  requestOtpVerification(@Body() body: { email: string; otp: string }) {
-    return this.authService.verifyOtp(body.email, body.otp);
+  @Patch('otp-verification')
+  requestOtpVerification(@Body() otpDto: OtpDto) {
+    return this.authService.verifyOtp(otpDto.email, otpDto.otp);
   }
 
   @Post('email-verification')
