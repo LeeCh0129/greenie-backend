@@ -88,7 +88,7 @@ export class PostsService {
       throw new NotFoundException('게시글을 찾을 수 없습니다');
     }
 
-    const likePost = await this.postLikeRepository
+    const beforePostLike = await this.postLikeRepository
       .createQueryBuilder('post_like')
       .where('post_like.user_id = :user_id', { user_id: userId })
       .andWhere('post_like.post_id = :post_id', { post_id: postId })
@@ -98,11 +98,11 @@ export class PostsService {
       });
 
     await this.entityManager.transaction(async (transactionEntityManager) => {
-      if (likePost) {
+      if (beforePostLike) {
         await transactionEntityManager
-          .delete(PostLike, { id: likePost.id })
+          .delete(PostLike, { id: beforePostLike.id })
           .catch(() => {
-            throw new InternalServerErrorException('게시글 좋아요 취소 실패');
+            throw new InternalServerErrorException('게시글 좋아요 취소 실패');
           });
         await transactionEntityManager
           .update(Post, post.id, {
@@ -111,7 +111,7 @@ export class PostsService {
           .catch(() => {
             throw new InternalServerErrorException('게시글 업데이트 실패');
           });
-        return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
+        return;
       }
 
       const user = new User();
@@ -134,6 +134,9 @@ export class PostsService {
         });
     });
 
+    if (beforePostLike) {
+      return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
+    }
     return { message: '좋아요 성공', likeCount: post.likeCount + 1 };
   }
 
