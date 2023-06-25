@@ -33,8 +33,13 @@ export class PostsController {
   ) {}
 
   @Get()
-  findAll(@CurrentUser() user: PayloadDto, @Query() query: PaginationDto) {
+  findAll(@Query() query: PaginationDto) {
     return this.postsService.findAll(query.page, query.take);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') postId: number) {
+    return this.postsService.findOne(postId);
   }
 
   @Post()

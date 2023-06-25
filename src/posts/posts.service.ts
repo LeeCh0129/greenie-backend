@@ -25,8 +25,7 @@ export class PostsService {
     @InjectRepository(PostLike)
     private readonly postLikeRepository: Repository<PostLike>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
-    @Inject('S3_CLIENT')
-    private readonly s3Client: S3Client,
+    @Inject('S3_CLIENT') private readonly s3Client: S3Client,
   ) {}
 
   async findAll(page: number, take: number): Promise<PageDto<Post>> {
@@ -47,6 +46,20 @@ export class PostsService {
       .orderBy('post.createdAt', 'DESC')
       .getManyAndCount();
     return new PageDto<Post>(posts[1], take, posts[0]);
+  }
+
+  async findOne(postId: number) {
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['author', 'postLike'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다');
+    }
+
+    console.log(post);
+    return post;
   }
 
   async patchLike(userId: number, postId: number) {
