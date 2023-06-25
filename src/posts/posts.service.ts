@@ -37,6 +37,7 @@ export class PostsService {
       .select([
         'post.id',
         'post.title',
+        'post.thumbnail',
         'post.likeCount',
         'post.createdAt',
         'user.id',
@@ -140,7 +141,12 @@ export class PostsService {
     return { message: '좋아요 성공', likeCount: post.likeCount + 1 };
   }
 
-  async create(userId: number, title: string, content: string): Promise<Post> {
+  async create(
+    userId: number,
+    title: string,
+    content: string,
+    thumbnail: string,
+  ): Promise<Post> {
     try {
       const user = new User();
       user.id = userId;
@@ -148,6 +154,7 @@ export class PostsService {
       const post = await this.postRepository.create({
         title,
         content,
+        thumbnail,
         author: user,
       });
 

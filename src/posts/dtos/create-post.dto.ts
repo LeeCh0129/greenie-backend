@@ -6,4 +6,7 @@ export class CreatePostDto {
 
   @IsString()
   body: string;
+
+  @IsString()
+  thumbnail: string;
 }

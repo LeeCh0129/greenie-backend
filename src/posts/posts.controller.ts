@@ -60,6 +60,7 @@ export class PostsController {
       user.id,
       createPostDto.title,
       createPostDto.body,
+      createPostDto.thumbnail,
     );
   }
 

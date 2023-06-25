@@ -17,6 +17,9 @@ export class Post {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  thumbnail: string;
+
   @Column({ length: 30 })
   title: string;
 
