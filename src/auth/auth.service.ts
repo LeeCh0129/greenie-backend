@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -335,5 +336,29 @@ export class AuthService {
     } catch (e) {
       throw new UnauthorizedException();
     }
+  }
+
+  async changePassword(userId: number, password: string, newPassword: string) {
+    const user = await this.entityManager.findOneBy(User, { id: userId });
+
+    if (!user) {
+      throw new NotFoundException('존재하지 않는 계정입니다');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new BadRequestException('잘못된 비밀번호입니다');
+    }
+
+    const encryptedPassword = await this.encrypt(newPassword);
+
+    await this.entityManager
+      .update(User, userId, {
+        password: encryptedPassword,
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('유저 업데이트 실패');
+      });
   }
 }
