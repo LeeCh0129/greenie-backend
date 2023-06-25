@@ -71,16 +71,6 @@ export class AppController {
     return this.authService.logout(user.id);
   }
 
-  @Get('nickname-duplicate')
-  @ApiOperation({ summary: '닉네임 중복 체크', description: '' })
-  @ApiResponse({
-    status: 200,
-    description: '중복된 닉네임 없음',
-  })
-  nicknameDuplicate(@Query('nickname') nickname: string) {
-    return this.authService.checkNicknameDuplicate(nickname);
-  }
-
   @Get('refresh-token')
   @ApiBearerAuth()
   @ApiOperation({ summary: '토큰 재발급', description: '' })

@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,6 +15,7 @@ import { LoginResponseDto } from 'src/dtos/login-response.dto';
 import { RefreshToken } from 'src/entities/refresh-token-entity';
 import { generateOTP } from 'src/utils/generate-otp.util';
 import { MailerService } from '@nestjs-modules/mailer';
+import { PayloadDto } from 'src/dtos/payload.dto';
 
 @Injectable()
 export class AuthService {
@@ -234,24 +234,6 @@ export class AuthService {
     return { accessToken, refreshToken: newRefreshToken };
   }
 
-  async checkNicknameDuplicate(nickname: string) {
-    if (!nickname) {
-      throw new BadRequestException('닉네임을 입력해주세요.');
-    }
-
-    const user = await this.entityManager.exists(User, {
-      where: {
-        nickname: nickname,
-      },
-    });
-
-    if (user) {
-      throw new BadRequestException('이미 사용중인 닉네임입니다.');
-    }
-
-    return { message: '사용가능한 닉네임입니다.' };
-  }
-
   async encrypt(password: string): Promise<string> {
     const salt = await bcrypt.genSalt(
       parseInt(this.configService.get<string>('SALT_OR_ROUNDS')),
@@ -335,5 +317,23 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async verifyAccessToken(accessToken: string): Promise<PayloadDto> {
+    try {
+      if (!accessToken) {
+        return null;
+      }
+
+      const splittedAccessToken = accessToken.split('Bearer ');
+      accessToken = splittedAccessToken[1];
+
+      const payload: PayloadDto = this.jwtService.verify(accessToken, {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+      });
+      return payload;
+    } catch (e) {
+      throw new UnauthorizedException();
+    }
   }
 }

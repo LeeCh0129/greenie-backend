@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UnsupportedMediaTypeException,
   UploadedFiles,
   UseGuards,
@@ -23,6 +24,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { PayloadDto } from 'src/dtos/payload.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('posts')
 @ApiTags('게시글')
@@ -30,6 +33,7 @@ export class PostsController {
   constructor(
     private postsService: PostsService,
     private commentsService: CommentsService,
+    private authService: AuthService,
   ) {}
 
   @Get()
@@ -38,8 +42,12 @@ export class PostsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') postId: number) {
-    return this.postsService.findOne(postId);
+  async findOne(@Req() req: Request, @Param('id') postId: number) {
+    const payload = await this.authService.verifyAccessToken(
+      req.headers.authorization,
+    );
+
+    return this.postsService.findOne(postId, payload.id);
   }
 
   @Post()

@@ -17,6 +17,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { PayloadDto } from 'src/dtos/payload.dto';
 
 @Injectable()
 export class PostsService {
@@ -48,7 +49,7 @@ export class PostsService {
     return new PageDto<Post>(posts[1], take, posts[0]);
   }
 
-  async findOne(postId: number) {
+  async findOne(postId: number, userId: number) {
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['author', 'postLike'],
@@ -58,7 +59,22 @@ export class PostsService {
       throw new NotFoundException('게시글을 찾을 수 없습니다');
     }
 
-    console.log(post);
+    if (userId) {
+      const user = new User();
+      user.id = userId;
+
+      const postLike = await this.postLikeRepository.findOne({
+        where: {
+          post: post,
+          user: user,
+        },
+      });
+
+      if (postLike) {
+        post.postLike.push(postLike);
+      }
+    }
+
     return post;
   }
 
