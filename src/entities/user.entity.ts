@@ -63,8 +63,10 @@ export class User {
   deletedAt: Date;
 
   @Column({ type: 'timestamp' })
+  @Exclude()
   otpCreatedAt: Date;
 
   @Column({ nullable: true })
+  @Exclude()
   otp: string;
 }

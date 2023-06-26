@@ -11,6 +11,7 @@ import {
 import { Comment } from './comment.entity';
 import { PostLike } from './post-like.entity';
 import { User } from './user.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Post {
@@ -42,6 +43,7 @@ export class Post {
   createdAt: Date;
 
   @DeleteDateColumn()
+  @Exclude()
   deletedAt: Date;
 
   @UpdateDateColumn()

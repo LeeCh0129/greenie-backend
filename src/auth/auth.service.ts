@@ -97,6 +97,7 @@ export class AuthService {
     const existEmail = await this.entityManager.exists(User, {
       where: { email },
     });
+
     if (existEmail) {
       throw new BadRequestException('이미 존재하는 이메일입니다');
     }
@@ -104,11 +105,13 @@ export class AuthService {
     const existNickname = await this.entityManager.exists(User, {
       where: { nickname },
     });
+
     if (existNickname) {
       throw new BadRequestException('이미 사용중인 닉네임입니다.');
     }
 
     const encryptedPassword = await this.encrypt(password);
+
     const user = this.entityManager.create(User, {
       email,
       nickname,
