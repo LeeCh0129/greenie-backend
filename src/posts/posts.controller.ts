@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -28,6 +29,7 @@ import { Request } from 'express';
 import { AuthService } from 'src/auth/auth.service';
 
 @Controller('posts')
+@UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('게시글')
 export class PostsController {
   constructor(
@@ -47,7 +49,10 @@ export class PostsController {
       req.headers.authorization,
     );
 
-    return this.postsService.findOne(postId, payload.id);
+    if (payload) {
+      return this.postsService.findOne(postId, payload.id);
+    }
+    return this.postsService.findOne(postId, null);
   }
 
   @Post()

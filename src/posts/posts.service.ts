@@ -53,7 +53,7 @@ export class PostsService {
   async findOne(postId: number, userId: number) {
     const post = await this.postRepository.findOne({
       where: { id: postId },
-      relations: ['author', 'postLike'],
+      relations: ['author'],
     });
 
     if (!post) {

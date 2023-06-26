@@ -321,17 +321,21 @@ export class AuthService {
   }
 
   async verifyAccessToken(accessToken: string): Promise<PayloadDto> {
-    if (!accessToken) {
+    try {
+      if (!accessToken) {
+        return null;
+      }
+
+      const splittedAccessToken = accessToken.split('Bearer ');
+      accessToken = splittedAccessToken[1];
+
+      const payload: PayloadDto = this.jwtService.verify(accessToken, {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+      });
+      return payload;
+    } catch (e) {
       return null;
     }
-
-    const splittedAccessToken = accessToken.split('Bearer ');
-    accessToken = splittedAccessToken[1];
-
-    const payload: PayloadDto = this.jwtService.verify(accessToken, {
-      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-    });
-    return payload;
   }
 
   async changePassword(userId: number, password: string, newPassword: string) {
