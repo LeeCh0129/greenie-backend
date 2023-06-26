@@ -52,4 +52,4 @@ jobs:
               -e PORT=${{ secrets.PORT }} \
               --name greenie \
               -p 3000:3000 \
-              ${{ secrets.DOCKER_USERNAME }}/greenie:latest
+              ${{ secrets.DOCKER_USERNAME }}/greenie:latest \
