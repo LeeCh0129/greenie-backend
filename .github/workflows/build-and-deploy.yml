@@ -52,5 +52,4 @@ jobs:
               -e PORT=${{ secrets.PORT }} \
               --name greenie \
               -p 3000:3000 \
-              -v /share/CACHEDEV1_DATA/Container/app:/app/public \
               ${{ secrets.DOCKER_USERNAME }}/greenie:latest
