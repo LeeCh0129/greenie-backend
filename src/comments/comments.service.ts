@@ -23,7 +23,10 @@ export class CommentsService {
         .take(take)
         .skip(take * (page - 1))
         .leftJoinAndSelect('comment.author', 'author')
+        .leftJoinAndSelect('comment.replyTo', 'replyTo')
+        .leftJoinAndSelect('comment.parent', 'parent')
         .where('comment.post_id = :postId', { postId })
+        .select(['comment', 'author', 'replyTo.id', 'parent.id'])
         // .andWhere('comment.deletedAt = null')
         .orderBy('comment.group', 'DESC')
         .getManyAndCount();
@@ -52,11 +55,32 @@ export class CommentsService {
     const author = new User();
     author.id = authorId;
 
+    let group;
+    // 댓글일 경우에는 group이 기존 가장 높은 그룹 값 +1 이기때문에 조회가 필요함
+    if (!parent.id && !replyTo.id) {
+      const temp = await this.commentsRepository
+        .createQueryBuilder('comment')
+        .select('MAX(comment.group)', 'group')
+        .getRawOne();
+      group = temp.group;
+      group++;
+    } else {
+      const temp = await this.commentsRepository.findOne({
+        select: ['group'],
+        where: {
+          id: parentId,
+        },
+      });
+
+      group = temp.group;
+    }
+    // 대댓글일 경우에는 부모 댓글의 그룹을 가져가기 떄문에 조회가 필요없음
     const comment = this.commentsRepository.create({
       author,
       post,
       content,
       parent,
+      group,
       replyTo,
     });
 
