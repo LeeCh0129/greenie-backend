@@ -32,7 +32,6 @@ export class PostResponseDto {
   constructor(post: Post) {
     this.id = post.id;
     this.title = post.title;
-    this.body = post.body;
     this.likeCount = post.likeCount;
     this.author = { id: post.author.id, nickname: post.author.nickname };
     this.createdAt = post.createdAt;
