@@ -24,9 +24,19 @@ import { PaginationDto } from 'src/comments/dtos/find-comment.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { PayloadDto } from 'src/dtos/payload.dto';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Request } from 'express';
 import { AuthService } from 'src/auth/auth.service';
+import { PageDto } from 'src/dtos/page.dto';
+import { PostResponseDto } from './dtos/post-response.dto';
+import { CommentResponseDto } from './dtos/comment-response.dto';
 
 @Controller('posts')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,6 +49,12 @@ export class PostsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: '모든 게시글 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '게시글 조회 성공',
+    type: PageDto,
+  })
   findAll(@Query() query: PaginationDto) {
     return this.postsService.findAll(query.page, query.take);
   }
@@ -57,16 +73,24 @@ export class PostsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '게시글 생성 ' })
+  @ApiResponse({
+    status: 201,
+    description: '게시글 생성 성공',
+    type: PostResponseDto,
+  })
+  async create(
     @CurrentUser() user: PayloadDto,
     @Body() createPostDto: CreatePostDto,
-  ) {
-    return this.postsService.create(
+  ): Promise<PostResponseDto> {
+    const post = await this.postsService.create(
       user.id,
       createPostDto.title,
       createPostDto.body,
       createPostDto.thumbnail,
     );
+    return new PostResponseDto(post);
   }
 
   @Post('images')
@@ -84,6 +108,28 @@ export class PostsController {
       },
     }),
   )
+  @ApiOperation({ summary: '게시글에 이미지 업로드' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 201,
+    description: '이미지 업로드 성공',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '게시글 이미지',
+    type: 'multipart/form-data',
+    schema: {
+      properties: {
+        images: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
   postUpload(
     @UploadedFiles()
     images: Express.Multer.File[],
@@ -95,12 +141,35 @@ export class PostsController {
 
   @Patch('images')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '이미지 수정' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '이미지 수정 성공',
+  })
+  @ApiBody({
+    description: '수정 할 이미지 url',
+    isArray: true,
+  })
   patchUpload(@Body('imageUrls') imageUrls: string[]) {
     return this.postsService.copyToImage(imageUrls);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: '게시글 수정',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '게시글 수정 성공',
+    type: PostResponseDto,
+  })
+  @ApiBody({
+    description: '수정할 게시글 내용',
+    type: CreatePostDto,
+  })
   patchPost(
     @CurrentUser() user: PayloadDto,
     @Param('id', ParseIntPipe) postId: number,
@@ -111,6 +180,12 @@ export class PostsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '게시글 삭제' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '게시글 삭제 성공',
+  })
   deletePost(
     @CurrentUser() user: PayloadDto,
     @Param('id', ParseIntPipe) postId: number,
@@ -120,6 +195,12 @@ export class PostsController {
 
   @Patch(':id/like')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '게시글 좋아요' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '게시글 좋아요 성공',
+  })
   likePost(
     @CurrentUser() user: PayloadDto,
     @Param('id', ParseIntPipe) postId: number,
@@ -128,12 +209,30 @@ export class PostsController {
   }
 
   @Get(':id/comments')
+  @ApiOperation({ summary: '게시글 댓글 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '게시글 댓글 조회 성공',
+    type: CommentResponseDto,
+    isArray: true,
+  })
   findAllComments(@Param('id') postId: number, @Query() query: PaginationDto) {
     return this.commentsService.findAll(postId, query.page, query.take);
   }
 
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '댓글 작성' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '댓글 작성 성공',
+    type: CommentResponseDto,
+  })
+  @ApiBody({
+    description: '작성할 댓글',
+    type: CreateCommentDto,
+  })
   createComment(
     @CurrentUser() user: PayloadDto,
     @Param('id') postId: string,
