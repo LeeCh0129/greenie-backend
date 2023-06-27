@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -8,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UnsupportedMediaTypeException,
   UploadedFiles,
   UseGuards,
@@ -33,13 +35,16 @@ import {
 import { PageDto } from 'src/dtos/page.dto';
 import { PostResponseDto } from './dtos/post-response.dto';
 import { CommentResponseDto } from './dtos/comment-response.dto';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('posts')
+@UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('게시글')
 export class PostsController {
   constructor(
     private postsService: PostsService,
     private commentsService: CommentsService,
+    private authService: AuthService,
   ) {}
 
   @Get()
@@ -49,8 +54,20 @@ export class PostsController {
     description: '게시글 조회 성공',
     type: PageDto,
   })
-  findAll(@CurrentUser() user: PayloadDto, @Query() query: PaginationDto) {
+  findAll(@Query() query: PaginationDto) {
     return this.postsService.findAll(query.page, query.take);
+  }
+
+  @Get(':id')
+  async findOne(@Req() req: Request, @Param('id') postId: number) {
+    const payload = await this.authService.verifyAccessToken(
+      req.headers.authorization,
+    );
+
+    if (payload) {
+      return this.postsService.findOne(postId, payload.id);
+    }
+    return this.postsService.findOne(postId, null);
   }
 
   @Post()
@@ -70,6 +87,7 @@ export class PostsController {
       user.id,
       createPostDto.title,
       createPostDto.body,
+      createPostDto.thumbnail,
     );
     return new PostResponseDto(post);
   }
@@ -114,8 +132,10 @@ export class PostsController {
   postUpload(
     @UploadedFiles()
     images: Express.Multer.File[],
+    @CurrentUser()
+    user: PayloadDto,
   ) {
-    return this.postsService.upload(images);
+    return this.postsService.upload(images, user.id);
   }
 
   @Patch('images')

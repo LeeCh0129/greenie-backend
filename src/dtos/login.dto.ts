@@ -1,9 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IntersectionType } from '@nestjs/swagger';
 import { EmailDto } from './email.dto';
+import { PasswordDto } from './password.dto';
 
-export class LoginDto extends EmailDto {
-  @IsString()
-  @ApiProperty({ description: '비밀번호', default: 'test1234!' })
-  password: string;
-}
+export class LoginDto extends IntersectionType(EmailDto, PasswordDto) {}

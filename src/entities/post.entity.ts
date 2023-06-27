@@ -11,17 +11,21 @@ import {
 import { Comment } from './comment.entity';
 import { PostLike } from './post-like.entity';
 import { User } from './user.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Post {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  thumbnail: string;
+
   @Column({ length: 30 })
   title: string;
 
-  @Column('text')
-  body: string;
+  @Column({ type: 'text', nullable: false })
+  content: string;
 
   @Column({ default: 0 })
   likeCount: number;
@@ -39,6 +43,7 @@ export class Post {
   createdAt: Date;
 
   @DeleteDateColumn()
+  @Exclude()
   deletedAt: Date;
 
   @UpdateDateColumn()

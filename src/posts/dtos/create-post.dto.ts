@@ -9,4 +9,7 @@ export class CreatePostDto {
   @IsString()
   @ApiProperty({ description: '내용', default: '내용' })
   body: string;
+
+  @IsString()
+  thumbnail: string;
 }

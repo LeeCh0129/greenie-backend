@@ -31,7 +31,8 @@ export class CommentsService {
         .orderBy('comment.group', 'DESC')
         .getManyAndCount();
       return new PageDto<Comment>(result[1], take, result[0]);
-    } catch {
+    } catch (e) {
+      console.log(e);
       throw new BadRequestException('올바르지 않은 요청입니다.');
     }
   }

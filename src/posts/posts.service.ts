@@ -17,6 +17,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { PayloadDto } from 'src/dtos/payload.dto';
 
 @Injectable()
 export class PostsService {
@@ -25,8 +26,7 @@ export class PostsService {
     @InjectRepository(PostLike)
     private readonly postLikeRepository: Repository<PostLike>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
-    @Inject('S3_CLIENT')
-    private readonly s3Client: S3Client,
+    @Inject('S3_CLIENT') private readonly s3Client: S3Client,
   ) {}
 
   async findAll(page: number, take: number): Promise<PageDto<Post>> {
@@ -37,6 +37,7 @@ export class PostsService {
       .select([
         'post.id',
         'post.title',
+        'post.thumbnail',
         'post.likeCount',
         'post.createdAt',
         'user.id',
@@ -49,6 +50,35 @@ export class PostsService {
     return new PageDto<Post>(posts[1], take, posts[0]);
   }
 
+  async findOne(postId: number, userId: number) {
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['author'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다');
+    }
+
+    if (userId) {
+      const user = new User();
+      user.id = userId;
+
+      const postLike = await this.postLikeRepository.findOne({
+        where: {
+          post: post,
+          user: user,
+        },
+      });
+
+      if (postLike) {
+        post.postLike.push(postLike);
+      }
+    }
+
+    return post;
+  }
+
   async patchLike(userId: number, postId: number) {
     const post = await this.postRepository
       .findOneBy({ id: postId })
@@ -59,7 +89,7 @@ export class PostsService {
       throw new NotFoundException('게시글을 찾을 수 없습니다');
     }
 
-    const likePost = await this.postLikeRepository
+    const beforePostLike = await this.postLikeRepository
       .createQueryBuilder('post_like')
       .where('post_like.user_id = :user_id', { user_id: userId })
       .andWhere('post_like.post_id = :post_id', { post_id: postId })
@@ -69,11 +99,11 @@ export class PostsService {
       });
 
     await this.entityManager.transaction(async (transactionEntityManager) => {
-      if (likePost) {
+      if (beforePostLike) {
         await transactionEntityManager
-          .delete(PostLike, { id: likePost.id })
+          .delete(PostLike, { id: beforePostLike.id })
           .catch(() => {
-            throw new InternalServerErrorException('게시글 좋아요 취소 실패');
+            throw new InternalServerErrorException('게시글 좋아요 취소 실패');
           });
         await transactionEntityManager
           .update(Post, post.id, {
@@ -82,7 +112,7 @@ export class PostsService {
           .catch(() => {
             throw new InternalServerErrorException('게시글 업데이트 실패');
           });
-        return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
+        return;
       }
 
       const user = new User();
@@ -105,17 +135,26 @@ export class PostsService {
         });
     });
 
+    if (beforePostLike) {
+      return { message: '좋아요 취소 성공', likeCount: post.likeCount - 1 };
+    }
     return { message: '좋아요 성공', likeCount: post.likeCount + 1 };
   }
 
-  async create(userId: number, title: string, body: string): Promise<Post> {
+  async create(
+    userId: number,
+    title: string,
+    content: string,
+    thumbnail: string,
+  ): Promise<Post> {
     try {
       const user = new User();
       user.id = userId;
 
       const post = await this.postRepository.create({
         title,
-        body,
+        content,
+        thumbnail,
         author: user,
       });
 
@@ -126,14 +165,18 @@ export class PostsService {
     }
   }
 
-  async update(postId: number, userId: number, body: Partial<CreatePostDto>) {
+  async update(
+    postId: number,
+    userId: number,
+    content: Partial<CreatePostDto>,
+  ) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null },
       relations: { author: true },
       select: {
         id: true,
         title: true,
-        body: true,
+        content: true,
         author: {
           id: true,
         },
@@ -149,7 +192,7 @@ export class PostsService {
     }
 
     try {
-      await this.postRepository.update(postId, body);
+      await this.postRepository.update(postId, content);
     } catch (e) {
       throw new InternalServerErrorException('게시글 업데이트에 실패했습니다');
     }
@@ -157,13 +200,13 @@ export class PostsService {
     return { message: '게시글 수정 성공' };
   }
 
-  async upload(images: Express.Multer.File[]) {
+  async upload(images: Express.Multer.File[], userId: number) {
     const imageUrls: string[] = [];
 
     await Promise.all(
       //만약 중간에 실패하면 어떻게 처리할 것인가?
       images.map(async (image: Express.Multer.File) => {
-        const key = 'images/' + Date.now() + '-' + image.originalname;
+        const key = 'images/' + Date.now() + '-' + userId;
         this.s3Client.send(
           new PutObjectCommand({
             Bucket: 'greenie-bucket',

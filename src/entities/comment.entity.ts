@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Post } from './post.entity';
 import { User } from './user.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Comment {
@@ -44,5 +45,6 @@ export class Comment {
   updatedAt: Date;
 
   @DeleteDateColumn()
+  @Exclude()
   deletedAt: Date;
 }

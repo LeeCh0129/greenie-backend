@@ -8,6 +8,7 @@ import { UsersModule } from 'src/users/users.module';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { UploadModule } from 'src/upload/upload.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UploadModule } from 'src/upload/upload.module';
     UsersModule,
     CommentsModule,
     UploadModule,
+    AuthModule,
   ],
   controllers: [PostsController],
   providers: [PostsService],

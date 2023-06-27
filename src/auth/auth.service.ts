@@ -16,6 +16,7 @@ import { LoginResponseDto } from 'src/dtos/login-response.dto';
 import { RefreshToken } from 'src/entities/refresh-token-entity';
 import { generateOTP } from 'src/utils/generate-otp.util';
 import { MailerService } from '@nestjs-modules/mailer';
+import { PayloadDto } from 'src/dtos/payload.dto';
 
 @Injectable()
 export class AuthService {
@@ -96,6 +97,7 @@ export class AuthService {
     const existEmail = await this.entityManager.exists(User, {
       where: { email },
     });
+
     if (existEmail) {
       throw new BadRequestException('이미 존재하는 이메일입니다');
     }
@@ -103,11 +105,13 @@ export class AuthService {
     const existNickname = await this.entityManager.exists(User, {
       where: { nickname },
     });
+
     if (existNickname) {
       throw new BadRequestException('이미 사용중인 닉네임입니다.');
     }
 
     const encryptedPassword = await this.encrypt(password);
+
     const user = this.entityManager.create(User, {
       email,
       nickname,
@@ -157,24 +161,6 @@ export class AuthService {
     const accessToken = this.generateAccessToken(verifyUser);
 
     return { accessToken, refreshToken: newRefreshToken };
-  }
-
-  async checkNicknameDuplicate(nickname: string) {
-    if (!nickname) {
-      throw new BadRequestException('닉네임을 입력해주세요.');
-    }
-
-    const user = await this.entityManager.exists(User, {
-      where: {
-        nickname: nickname,
-      },
-    });
-
-    if (user) {
-      throw new BadRequestException('이미 사용중인 닉네임입니다.');
-    }
-
-    return { message: '사용가능한 닉네임입니다.' };
   }
 
   async encrypt(password: string): Promise<string> {
@@ -260,5 +246,47 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async verifyAccessToken(accessToken: string): Promise<PayloadDto> {
+    try {
+      if (!accessToken) {
+        return null;
+      }
+
+      const splittedAccessToken = accessToken.split('Bearer ');
+      accessToken = splittedAccessToken[1];
+
+      const payload: PayloadDto = this.jwtService.verify(accessToken, {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+      });
+      return payload;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async changePassword(userId: number, password: string, newPassword: string) {
+    const user = await this.entityManager.findOneBy(User, { id: userId });
+
+    if (!user) {
+      throw new NotFoundException('존재하지 않는 계정입니다');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new BadRequestException('잘못된 비밀번호입니다');
+    }
+
+    const encryptedPassword = await this.encrypt(newPassword);
+
+    await this.entityManager
+      .update(User, userId, {
+        password: encryptedPassword,
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('유저 업데이트 실패');
+      });
   }
 }
