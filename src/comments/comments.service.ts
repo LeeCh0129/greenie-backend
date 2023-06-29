@@ -57,16 +57,13 @@ export class CommentsService {
     author.id = authorId;
 
     let group;
-
-    //댓글일 경우에는 group이 기존 가장 높은 그룹 값 + 1이기 때문에 조회가 필요함
+    // 댓글일 경우에는 group이 기존 가장 높은 그룹 값 +1 이기때문에 조회가 필요함
     if (!parent.id && !replyTo.id) {
       const temp = await this.commentsRepository
         .createQueryBuilder('comment')
         .select('MAX(comment.group)', 'group')
         .getRawOne();
-
       group = temp.group;
-
       group++;
     } else {
       const temp = await this.commentsRepository.findOne({
@@ -78,7 +75,7 @@ export class CommentsService {
 
       group = temp.group;
     }
-
+    // 대댓글일 경우에는 부모 댓글의 그룹을 가져가기 떄문에 조회가 필요없음
     const comment = this.commentsRepository.create({
       author,
       post,

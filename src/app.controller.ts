@@ -85,34 +85,4 @@ export class AppController {
   ) {
     return this.authService.refreshingToken(refreshToken);
   }
-
-  @Post('otp-verification')
-  sendOtp(@Body() emailDto: EmailDto) {
-    return this.authService.sendOtpEmail(emailDto.email);
-  }
-
-  @Patch('otp-verification')
-  requestOtpVerification(@Body() otpDto: OtpDto) {
-    return this.authService.verifyOtp(otpDto.email, otpDto.otp);
-  }
-
-  @Post('email-verification')
-  @ApiOperation({ summary: '이메일 인증 요청', description: '' })
-  @ApiResponse({
-    status: 201,
-    description: '이메일 인증 요청 성공',
-  })
-  postEmailVerification(@Query() emailDto: EmailDto) {
-    return this.authService.requestEmailVerification(emailDto.email);
-  }
-
-  @Get('email-verification')
-  @ApiOperation({ summary: '이메일 인증 조회', description: '' })
-  @ApiResponse({
-    status: 200,
-    description: '이메일 인증 조회 성공',
-  })
-  getEmailVerification(@Query() emailDto: EmailDto) {
-    return this.authService.checkEmailVerification(emailDto.email);
-  }
 }
