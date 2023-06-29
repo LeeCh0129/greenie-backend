@@ -14,6 +14,7 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreatePostDto } from './dtos/create-post.dto';
 import { PostsService } from './posts.service';
@@ -44,7 +45,10 @@ export class PostsController {
   }
 
   @Get(':id')
-  async findOne(@Req() req: Request, @Param('id') postId: number) {
+  async findOne(
+    @Req() req: Request,
+    @Param('id', ParseIntPipe) postId: number,
+  ) {
     const payload = await this.authService.verifyAccessToken(
       req.headers.authorization,
     );
@@ -128,7 +132,10 @@ export class PostsController {
   }
 
   @Get(':id/comments')
-  findAllComments(@Param('id') postId: number, @Query() query: PaginationDto) {
+  findAllComments(
+    @Param('id', ParseIntPipe) postId: number,
+    @Query() query: PaginationDto,
+  ) {
     return this.commentsService.findAll(postId, query.page, query.take);
   }
 
@@ -136,12 +143,12 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   createComment(
     @CurrentUser() user: PayloadDto,
-    @Param('id') postId: string,
+    @Param('id', ParseIntPipe) postId: number,
     @Body() createCommentDto: CreateCommentDto,
   ) {
     return this.commentsService.create(
       user.id,
-      parseInt(postId),
+      postId,
       createCommentDto.content,
       createCommentDto.parentId,
       createCommentDto.replyToId,
