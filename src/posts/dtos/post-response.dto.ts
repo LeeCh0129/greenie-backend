@@ -12,7 +12,7 @@ export class PostResponseDto {
   title: string;
 
   @ApiProperty({ description: '게시글 내용' })
-  body: string;
+  content: string;
 
   @ApiProperty({ description: '게시글 좋아요' })
   likeCount: number;
@@ -32,7 +32,7 @@ export class PostResponseDto {
   constructor(post: Post) {
     this.id = post.id;
     this.title = post.title;
-    this.body = post.content;
+    this.content = post.content;
     this.likeCount = post.likeCount;
     this.author = { id: post.author.id, nickname: post.author.nickname };
     this.createdAt = post.createdAt;

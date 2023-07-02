@@ -17,7 +17,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { PayloadDto } from 'src/dtos/payload.dto';
+import { PostResponseDto } from './dtos/post-response.dto';
 
 @Injectable()
 export class PostsService {
@@ -146,10 +146,40 @@ export class PostsService {
     title: string,
     content: string,
     thumbnail: string,
-  ): Promise<Post> {
+  ): Promise<PostResponseDto> {
     try {
       const user = new User();
       user.id = userId;
+
+      //content, img 태그에서 주소를 temp에서 images로 변경
+      const imageUrls: string[] = [];
+      const regex = /<img[^>]+src="([^">]+)"/g;
+
+      while (true) {
+        const match = regex.exec(content);
+        if (!match) {
+          break;
+        }
+
+        const src = match[1];
+        if (
+          src.startsWith(
+            'https://greenie-bucket.s3.ap-northeast-2.amazonaws.com/temp/',
+          )
+        ) {
+          const imageUrl = src.substring(src.lastIndexOf('/') + 1);
+          const newSrc = src.replace(
+            'https://greenie-bucket.s3.ap-northeast-2.amazonaws.com/temp/',
+            'https://greenie-bucket.s3.ap-northeast-2.amazonaws.com/images/',
+          );
+
+          content = content.replace(src, newSrc);
+
+          imageUrls.push(imageUrl);
+        }
+      }
+
+      await this.copyImageFromTempToImages(imageUrls);
 
       const post = await this.postRepository.create({
         title,
@@ -163,6 +193,30 @@ export class PostsService {
     } catch (e) {
       throw new InternalServerErrorException('게시글 작성에 실패했습니다');
     }
+  }
+
+  async copyImageFromTempToImages(imageUrls: string[]) {
+    const newImageUrls = [];
+
+    await Promise.all(
+      imageUrls.map((imageUrl: string) => {
+        const key = 'images/' + imageUrl;
+        this.s3Client
+          .send(
+            new CopyObjectCommand({
+              Bucket: 'greenie-bucket',
+              CopySource: 'greenie-bucket/temp/' + imageUrl,
+              Key: key,
+            }),
+          )
+          .catch((e) => {
+            throw new InternalServerErrorException(e);
+          });
+        newImageUrls.push(key);
+      }),
+    );
+
+    console.log(newImageUrls);
   }
 
   async update(
@@ -204,19 +258,24 @@ export class PostsService {
     const imageUrls: string[] = [];
 
     await Promise.all(
-      //만약 중간에 실패하면 어떻게 처리할 것인가?
       images.map(async (image: Express.Multer.File) => {
-        const key = 'images/' + Date.now() + '-' + userId;
-        this.s3Client.send(
-          new PutObjectCommand({
-            Bucket: 'greenie-bucket',
-            Key: key,
-            Body: image.buffer,
-          }),
-        );
+        const key = 'temp/' + Date.now() + '-' + userId;
+        this.s3Client
+          .send(
+            new PutObjectCommand({
+              Bucket: 'greenie-bucket',
+              Key: key,
+              Body: image.buffer,
+            }),
+          )
+          .catch((e) => {
+            throw new InternalServerErrorException(e);
+          });
         imageUrls.push(key);
       }),
-    );
+    ).catch((e) => {
+      throw new InternalServerErrorException('이미지 저장에 실했습니다');
+    });
 
     return { imageUrls, message: '이미지 저장 성공' };
   }

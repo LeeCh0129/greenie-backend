@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -8,8 +8,9 @@ export class CreatePostDto {
 
   @IsString()
   @ApiProperty({ description: '내용', default: '내용' })
-  body: string;
+  content: string;
 
   @IsString()
+  @IsOptional()
   thumbnail: string;
 }

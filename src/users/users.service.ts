@@ -25,6 +25,7 @@ export class UsersService {
       .leftJoinAndSelect('user.post', 'post')
       .getOne();
   }
+
   async sendOtpEmail(email: string): Promise<void> {
     const otp = generateOTP();
     const user = await this.entityManger.findOne(User, { where: { email } });
