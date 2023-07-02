@@ -88,13 +88,12 @@ export class PostsController {
     @CurrentUser() user: PayloadDto,
     @Body() createPostDto: CreatePostDto,
   ): Promise<PostResponseDto> {
-    const post = await this.postsService.create(
+    return await this.postsService.create(
       user.id,
       createPostDto.title,
-      createPostDto.body,
+      createPostDto.content,
       createPostDto.thumbnail,
     );
-    return new PostResponseDto(post);
   }
 
   @Post('images')
@@ -141,22 +140,6 @@ export class PostsController {
     user: PayloadDto,
   ) {
     return this.postsService.upload(images, user.id);
-  }
-
-  @Patch('images')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: '이미지 수정' })
-  @ApiBearerAuth()
-  @ApiResponse({
-    status: 200,
-    description: '이미지 수정 성공',
-  })
-  @ApiBody({
-    description: '수정 할 이미지 url',
-    isArray: true,
-  })
-  patchUpload(@Body('imageUrls') imageUrls: string[]) {
-    return this.postsService.copyToImage(imageUrls);
   }
 
   @Patch(':id')

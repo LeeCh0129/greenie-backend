@@ -62,24 +62,6 @@ export class AuthService {
     });
   }
 
-  async requestEmailVerification(email: string) {
-    const user = await this.entityManager.exists(User, { where: { email } });
-
-    if (!user) {
-      throw new NotFoundException('존재하지 않는 이메일입니다.');
-    }
-
-    await this.entityManager.update(
-      User,
-      { email },
-      {
-        emailVerified: true,
-      },
-    );
-
-    return '임시 이메일 인증 완료';
-  }
-
   async checkEmailVerification(email: string) {
     const user = await this.entityManager.findOne(User, {
       where: { email },

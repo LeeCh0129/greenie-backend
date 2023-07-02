@@ -221,27 +221,6 @@ export class PostsService {
     return { imageUrls, message: '이미지 저장 성공' };
   }
 
-  async copyToImage(imageUrls: string[]) {
-    const newImageUrls: string[] = [];
-
-    await Promise.all(
-      imageUrls.map((imageUrl: string) => {
-        const urlSplit = imageUrl.split('/');
-        const key = 'images/' + urlSplit[1];
-        this.s3Client.send(
-          new CopyObjectCommand({
-            Bucket: 'greenie-bucket',
-            CopySource: 'greenie-bucket/' + imageUrl,
-            Key: key,
-          }),
-        );
-        newImageUrls.push(key);
-      }),
-    );
-
-    return newImageUrls;
-  }
-
   async delete(postId: number, userId: number) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null },
