@@ -8,6 +8,7 @@ import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { generateOTP } from 'src/utils/generate-otp.util';
 import { EntityManager, Repository } from 'typeorm';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -117,5 +118,29 @@ export class UsersService {
     }
 
     return { message: '사용가능한 닉네임입니다.' };
+  }
+
+  async update(userId: number, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('유저를 찾을 수 없습니다');
+    }
+
+    if (updateUserDto.nickname) {
+      user.nickname = updateUserDto.nickname;
+    }
+
+    if (updateUserDto.profileImage) {
+      user.profileImage = updateUserDto.profileImage;
+    }
+
+    const result = await this.userRepository.update(
+      { id: userId },
+      {
+        nickname: updateUserDto.nickname ?? user.nickname,
+        profileImage: updateUserDto.profileImage ?? user.profileImage,
+      },
+    );
   }
 }

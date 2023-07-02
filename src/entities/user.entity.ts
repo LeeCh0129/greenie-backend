@@ -38,6 +38,10 @@ export class User {
   @ApiProperty({ description: 'nickname', default: '송눈섭' })
   nickname: string;
 
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'profileImage', default: '' })
+  profileImage: string;
+
   @OneToOne(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshToken: RefreshToken;
 
