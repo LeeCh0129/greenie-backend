@@ -179,6 +179,19 @@ export class PostsService {
         }
       }
 
+      if (thumbnail) {
+        if (
+          thumbnail.startsWith(
+            'https://greenie-bucket.s3.ap-northeast-2.amazonaws.com/temp/',
+          )
+        ) {
+          thumbnail = thumbnail.replace(
+            'https://greenie-bucket.s3.ap-northeast-2.amazonaws.com/temp/',
+            'https://greenie-bucket.s3.ap-northeast-2.amazonaws.com/images/',
+          );
+        }
+      }
+
       await this.copyImageFromTempToImages(imageUrls);
 
       const post = await this.postRepository.create({
@@ -215,8 +228,6 @@ export class PostsService {
         newImageUrls.push(key);
       }),
     );
-
-    console.log(newImageUrls);
   }
 
   async update(
