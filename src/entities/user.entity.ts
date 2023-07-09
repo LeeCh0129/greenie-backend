@@ -15,6 +15,7 @@ import { Post } from './post.entity';
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { RefreshToken } from './refresh-token-entity';
+import { UserProfile } from './user-profile.entity';
 
 @Entity()
 export class User {
@@ -34,12 +35,12 @@ export class User {
   @ApiProperty({ description: 'emailVerified' })
   emailVerified: boolean;
 
-  @Column({ unique: true })
-  @ApiProperty({ description: 'nickname', default: '송눈섭' })
-  nickname: string;
-
   @OneToOne(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshToken: RefreshToken;
+
+  @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
+  @JoinColumn()
+  profile: UserProfile;
 
   @OneToMany(() => Post, (post) => post.author)
   post: Post[];

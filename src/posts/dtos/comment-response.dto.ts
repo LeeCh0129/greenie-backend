@@ -32,7 +32,10 @@ export class CommentResponseDto {
   constructor(comment: Comment) {
     this.id = comment.id;
     this.content = comment.content;
-    this.author = { id: comment.author.id, nickname: comment.author.nickname };
+    this.author = {
+      id: comment.author.id,
+      nickname: comment.author.profile.nickname,
+    };
     this.postId = comment.post.id;
     this.parentId = comment.parent?.id;
     this.replyToId = comment.replyTo?.id;

@@ -34,7 +34,10 @@ export class PostResponseDto {
     this.title = post.title;
     this.body = post.content;
     this.likeCount = post.likeCount;
-    this.author = { id: post.author.id, nickname: post.author.nickname };
+    this.author = {
+      id: post.author.id,
+      nickname: post.author.profile.nickname,
+    };
     this.createdAt = post.createdAt;
     this.deletedAt = post.deletedAt;
     this.updatedAt = post.updatedAt;
