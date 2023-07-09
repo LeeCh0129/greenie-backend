@@ -26,6 +26,10 @@ export class UserProfile {
   @ApiProperty({ description: 'nickname', default: '송눈섭 ' })
   nickname: string;
 
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'profileImage', default: '' })
+  profileImage: string;
+
   @OneToOne(() => User, (user) => user.profile)
   @JoinColumn()
   user: User;
