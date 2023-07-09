@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -21,9 +22,9 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { PayloadDto } from 'src/dtos/payload.dto';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { PasswordDto } from 'src/dtos/password.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { ChangePasswordDto } from 'src/dtos/change-password.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Controller('users')
 @ApiTags('유저')
@@ -34,8 +35,17 @@ export class UsersController {
   ) {}
 
   @Get(':id')
-  findById(@Param('id') id: string) {
+  findById(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findById(+id);
+  }
+
+  @Patch()
+  @UseGuards(JwtAuthGuard)
+  updateById(
+    @CurrentUser() user: PayloadDto,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(user.id, updateUserDto);
   }
 
   @Get('nickname-duplicate')
