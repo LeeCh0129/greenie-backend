@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { UserProfile } from 'src/entities/user-profile.entity';
 import { User } from 'src/entities/user.entity';
 import { generateOTP } from 'src/utils/generate-otp.util';
 import { EntityManager, Repository } from 'typeorm';
@@ -107,7 +108,7 @@ export class UsersService {
       throw new BadRequestException('닉네임을 입력해주세요.');
     }
 
-    const user = await this.entityManager.exists(User, {
+    const user = await this.entityManager.exists(UserProfile, {
       where: {
         nickname: nickname,
       },

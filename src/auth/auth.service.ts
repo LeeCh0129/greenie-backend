@@ -14,9 +14,10 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { LoginResponseDto } from 'src/dtos/login-response.dto';
 import { RefreshToken } from 'src/entities/refresh-token-entity';
-import { generateOTP } from 'src/utils/generate-otp.util';
 import { MailerService } from '@nestjs-modules/mailer';
 import { PayloadDto } from 'src/dtos/payload.dto';
+import { UsersService } from 'src/users/users.service';
+import { UserProfile } from 'src/entities/user-profile.entity';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailerService,
+    private usersService: UsersService,
   ) {}
 
   async login(email: string, password: string): Promise<LoginResponseDto> {
@@ -84,7 +86,7 @@ export class AuthService {
       throw new BadRequestException('이미 존재하는 이메일입니다');
     }
 
-    const existNickname = await this.entityManager.exists(User, {
+    const existNickname = await this.entityManager.exists(UserProfile, {
       where: { nickname },
     });
 
@@ -96,11 +98,14 @@ export class AuthService {
 
     const user = this.entityManager.create(User, {
       email,
-      nickname,
       password: encryptedPassword,
     });
 
-    await this.entityManager.save(user);
+    const profile = this.entityManager.create(UserProfile, {
+      nickname,
+    });
+
+    await this.entityManager.save([user, profile]);
 
     return user;
   }
@@ -159,7 +164,7 @@ export class AuthService {
         JSON.stringify({
           id: user.id,
           email: user.email,
-          nickname: user.nickname,
+          nickname: user.profile.nickname,
         }),
       ),
       {
