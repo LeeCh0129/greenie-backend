@@ -24,6 +24,8 @@ import { PayloadDto } from 'src/dtos/payload.dto';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { AuthService } from 'src/auth/auth.service';
 import { ChangePasswordDto } from 'src/dtos/change-password.dto';
+import { OtpRequestDto } from 'src/dtos/otp-request.dto';
+import { BadRequestException } from '@nestjs/common';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Controller('users')
@@ -58,19 +60,6 @@ export class UsersController {
     return this.usersService.checkNicknameDuplicate(nickname);
   }
 
-  @Patch('password')
-  @UseGuards(JwtAuthGuard)
-  changePassword(
-    @CurrentUser() user: PayloadDto,
-    @Body() password: ChangePasswordDto,
-  ) {
-    return this.authService.changePassword(
-      user.id,
-      password.password,
-      password.newPassword,
-    );
-  }
-
   @Post('email-verification')
   @ApiOperation({ summary: '이메일 OTP 인증 요청' })
   @ApiResponse({ status: 201, description: 'OTP 인증 요청 성공' })
@@ -78,8 +67,14 @@ export class UsersController {
     status: 404,
     description: '해당 이메일을 찾을 수 없습니다.',
   })
-  sendOtp(@Body() emailDto: EmailDto) {
-    return this.usersService.sendOtpEmail(emailDto.email);
+  sendOtp(@Body() otpRequest: OtpRequestDto) {
+    if (otpRequest.mode === 'email') {
+      return this.usersService.sendOtpEmail(otpRequest.email, 'email');
+    } else if (otpRequest.mode === 'changePassword') {
+      return this.usersService.sendOtpEmail(otpRequest.email, 'changePassword');
+    } else {
+      throw new BadRequestException('잘못된 요청입니다.');
+    }
   }
 
   @Patch('email-verification')
@@ -94,6 +89,22 @@ export class UsersController {
     description: '이메일 OTP 인증 완료',
   })
   requestOtpVerification(@Body() otpDto: OtpDto) {
-    return this.usersService.verifyOtp(otpDto.email, otpDto.otp);
+    return this.usersService.verifyOtp(
+      otpDto.email,
+      otpDto.otp,
+      'changePassword',
+    );
+  }
+  @Patch('password')
+  changePassword(
+    @CurrentUser() user: PayloadDto,
+    @Body() password: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      password.email,
+      password.otp,
+      password.newPassword,
+      password.mode,
+    );
   }
 }
