@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -25,6 +26,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { ChangePasswordDto } from 'src/dtos/change-password.dto';
 import { OtpRequestDto } from 'src/dtos/otp-request.dto';
 import { BadRequestException } from '@nestjs/common';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Controller('users')
 @ApiTags('유저')
@@ -35,8 +37,17 @@ export class UsersController {
   ) {}
 
   @Get(':id')
-  findById(@Param('id') id: string) {
+  findById(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findById(+id);
+  }
+
+  @Patch()
+  @UseGuards(JwtAuthGuard)
+  updateById(
+    @CurrentUser() user: PayloadDto,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(user.id, updateUserDto);
   }
 
   @Get('nickname-duplicate')
