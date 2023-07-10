@@ -39,6 +39,7 @@ export class User {
   refreshToken: RefreshToken;
 
   @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
+  @JoinColumn()
   profile: UserProfile;
 
   @OneToMany(() => Post, (post) => post.author)
@@ -62,7 +63,7 @@ export class User {
   @Exclude()
   deletedAt: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp' })
   @Exclude()
   otpCreatedAt: Date;
 
