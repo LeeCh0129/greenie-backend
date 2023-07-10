@@ -32,6 +32,7 @@ export class AuthService {
   async login(email: string, password: string): Promise<LoginResponseDto> {
     const user = await this.entityManager.findOne(User, {
       where: { email },
+      relations: ['profile'],
     });
 
     if (!user) {
@@ -114,16 +115,17 @@ export class AuthService {
 
     const encryptedPassword = await this.encrypt(password);
 
-    const user = this.entityManager.create(User, {
-      email,
-      password: encryptedPassword,
-    });
-
     const profile = this.entityManager.create(UserProfile, {
       nickname,
     });
 
-    await this.entityManager.save([user, profile]);
+    const user = this.entityManager.create(User, {
+      email,
+      password: encryptedPassword,
+      profile,
+    });
+
+    await this.entityManager.save(user);
 
     return user;
   }
@@ -223,8 +225,10 @@ export class AuthService {
     userId: number,
     refreshToken: string,
   ): Promise<User> {
-    const user = new User();
-    user.id = userId;
+    const user = await this.entityManager.findOne(User, {
+      where: { id: userId },
+      relations: ['profile'],
+    });
 
     const refreshTokens = await this.entityManager.findBy(RefreshToken, {
       user,

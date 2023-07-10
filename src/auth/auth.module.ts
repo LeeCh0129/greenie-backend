@@ -8,11 +8,12 @@ import { JwtStrategy } from './jwt/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { UsersService } from 'src/users/users.service';
 import { UsersModule } from 'src/users/users.module';
+import { UserProfile } from 'src/entities/user-profile.entity';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserProfile]),
     JwtModule.register({}),
   ],
   providers: [AuthService, UsersService, JwtStrategy],

@@ -56,22 +56,23 @@ export class CommentsService {
     const author = new User();
     author.id = authorId;
 
-    let group;
+    let group: number;
     // 댓글일 경우에는 group이 기존 가장 높은 그룹 값 +1 이기때문에 조회가 필요함
     if (!parent.id && !replyTo.id) {
       const temp = await this.commentsRepository
         .createQueryBuilder('comment')
         .select('MAX(comment.group)', 'group')
+        .where('comment.post_id = :postId', { postId })
         .getRawOne();
+
       group = temp.group;
       group++;
     } else {
-      const temp = await this.commentsRepository.findOne({
-        select: ['group'],
-        where: {
-          id: parentId,
-        },
-      });
+      const temp = await this.commentsRepository
+        .createQueryBuilder('comment')
+        .where('comment.post_id = :postId', { postId })
+        .where('comment.id = :parentId', { parentId })
+        .getOne();
 
       group = temp.group;
     }

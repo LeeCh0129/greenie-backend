@@ -148,8 +148,10 @@ export class PostsService {
     thumbnail: string,
   ): Promise<Post> {
     try {
-      const user = new User();
-      user.id = userId;
+      const user = await this.entityManager.findOne(User, {
+        where: { id: userId },
+        relations: ['profile'],
+      });
 
       const post = await this.postRepository.create({
         title,
