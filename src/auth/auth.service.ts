@@ -32,6 +32,7 @@ export class AuthService {
   async login(email: string, password: string): Promise<LoginResponseDto> {
     const user = await this.entityManager.findOne(User, {
       where: { email },
+      relations: { profile: true },
     });
 
     if (!user) {
@@ -205,9 +206,10 @@ export class AuthService {
     userId: number,
     refreshToken: string,
   ): Promise<User> {
-    const user = new User();
-    user.id = userId;
-
+    const user = await this.entityManager.findOne(User, {
+      where: { id: userId },
+      relations: ['profile'],
+    });
     const refreshTokens = await this.entityManager.findBy(RefreshToken, {
       user,
     });

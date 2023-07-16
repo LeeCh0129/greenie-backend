@@ -39,7 +39,6 @@ export class User {
   refreshToken: RefreshToken;
 
   @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
-  @JoinColumn()
   profile: UserProfile;
 
   @OneToMany(() => Post, (post) => post.author)

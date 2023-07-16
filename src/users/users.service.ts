@@ -9,11 +9,11 @@ import { UserProfile } from 'src/entities/user-profile.entity';
 import { User } from 'src/entities/user.entity';
 import { generateOTP } from 'src/utils/generate-otp.util';
 import { EntityManager, Repository } from 'typeorm';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectEntityManager() private entityManger: EntityManager,
     private mailService: MailerService,
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
@@ -36,7 +36,7 @@ export class UsersService {
     }
     user.otp = otp;
     user.otpCreatedAt = new Date();
-    await this.entityManger.save(user);
+    await this.entityManager.save(user);
 
     console.log('otp:' + otp);
     await this.mailService.sendMail({
@@ -84,7 +84,7 @@ export class UsersService {
   }
 
   async verifyOtp(email: string, otp: string, mode: string): Promise<string> {
-    const user = await this.entityManger.findOne(User, {
+    const user = await this.entityManager.findOne(User, {
       where: { email },
     });
 
@@ -102,7 +102,7 @@ export class UsersService {
       throw new BadRequestException('유효하지 않은 OTP 입니다.');
     }
     user.emailVerified = true;
-    await this.entityManger.save(user);
+    await this.entityManager.save(user);
 
     return user.email;
   }
@@ -123,5 +123,36 @@ export class UsersService {
     }
 
     return { message: '사용가능한 닉네임입니다.' };
+  }
+  async update(userId: number, updateUserDto: UpdateUserDto) {
+    const user = new User();
+    user.id = userId;
+
+    const userProfile = await this.entityManager.findOneBy(UserProfile, {
+      user,
+    });
+
+    if (!user) {
+      throw new NotFoundException('유저를 찾을 수 없습니다');
+    }
+
+    if (updateUserDto.nickname) {
+      userProfile.nickname = updateUserDto.nickname;
+    }
+
+    if (updateUserDto.profileImage) {
+      userProfile.profileImage = updateUserDto.profileImage;
+    }
+
+    await this.entityManager.update(
+      UserProfile,
+      { id: userId },
+      {
+        nickname: updateUserDto.nickname ?? userProfile.nickname,
+        profileImage: updateUserDto.profileImage ?? userProfile.profileImage,
+      },
+    );
+
+    return { message: '업데이트 성공' };
   }
 }

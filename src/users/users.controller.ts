@@ -13,6 +13,7 @@ import {
 import { UsersService } from './users.service';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
@@ -43,6 +44,7 @@ export class UsersController {
 
   @Patch()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   updateById(
     @CurrentUser() user: PayloadDto,
     @Body() updateUserDto: UpdateUserDto,

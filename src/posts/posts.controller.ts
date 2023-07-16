@@ -87,7 +87,7 @@ export class PostsController {
   async create(
     @CurrentUser() user: PayloadDto,
     @Body() createPostDto: CreatePostDto,
-  ): Promise<PostResponseDto> {
+  ): Promise<Object> {
     return await this.postsService.create(
       user.id,
       createPostDto.title,

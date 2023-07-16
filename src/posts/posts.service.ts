@@ -146,7 +146,7 @@ export class PostsService {
     title: string,
     content: string,
     thumbnail: string,
-  ): Promise<PostResponseDto> {
+  ): Promise<Object> {
     try {
       const user = new User();
       user.id = userId;
@@ -202,7 +202,7 @@ export class PostsService {
       });
 
       await this.postRepository.save(post);
-      return post;
+      return { message: '작성완료' };
     } catch (e) {
       throw new InternalServerErrorException('게시글 작성에 실패했습니다');
     }
