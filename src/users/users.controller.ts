@@ -37,11 +37,6 @@ export class UsersController {
     private readonly authService: AuthService,
   ) {}
 
-  @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findById(+id);
-  }
-
   @Patch()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -108,5 +103,10 @@ export class UsersController {
       password.newPassword,
       password.mode,
     );
+  }
+
+  @Get(':id')
+  findById(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.findById(+id);
   }
 }
