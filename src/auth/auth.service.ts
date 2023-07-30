@@ -106,7 +106,10 @@ export class AuthService {
       nickname,
     });
 
+    user.profile = profile;
+
     await this.entityManager.save([user, profile]);
+    // await this.entityManager.save(user);
 
     return user;
   }
@@ -160,6 +163,9 @@ export class AuthService {
   }
 
   generateAccessToken(user: User): string {
+    if (!user.profile || !user.profile.nickname) {
+      throw new NotFoundException('User profile not found');
+    }
     return this.jwtService.sign(
       JSON.parse(
         JSON.stringify({

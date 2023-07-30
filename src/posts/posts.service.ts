@@ -41,9 +41,12 @@ export class PostsService {
         'post.likeCount',
         'post.createdAt',
         'user.id',
-        'user.nickname',
+        'profile.id',
+        'profile.nickname',
+        'profile.profileImage',
       ])
       .leftJoin('post.author', 'user')
+      .leftJoin('user.profile', 'profile')
       .where('post.deletedAt IS NULL')
       .orderBy('post.createdAt', 'DESC')
       .getManyAndCount();
