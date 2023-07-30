@@ -16,6 +16,7 @@ import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { RefreshToken } from './refresh-token-entity';
 import { UserProfile } from './user-profile.entity';
+import { CommentLike } from './comment-like.entity';
 
 @Entity()
 export class User {
@@ -47,6 +48,9 @@ export class User {
   @OneToMany(() => PostLike, (postLike) => postLike.user)
   postLike: PostLike[];
 
+  @OneToMany(() => CommentLike, (commentLike) => commentLike.user)
+  commentLike: CommentLike[];
+
   @OneToMany(() => Comment, (comment) => comment.author)
   comment: Comment[];
 
@@ -62,7 +66,7 @@ export class User {
   @Exclude()
   deletedAt: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', nullable: true })
   @Exclude()
   otpCreatedAt: Date;
 

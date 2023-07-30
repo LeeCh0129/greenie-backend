@@ -9,10 +9,11 @@ import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { UploadModule } from 'src/upload/upload.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { CommentLike } from 'src/entities/comment-like.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post, PostLike, Comment]),
+    TypeOrmModule.forFeature([Post, PostLike, Comment, CommentLike]),
     UsersModule,
     CommentsModule,
     UploadModule,

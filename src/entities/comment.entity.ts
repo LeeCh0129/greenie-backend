@@ -11,6 +11,7 @@ import {
 import { Post } from './post.entity';
 import { User } from './user.entity';
 import { Exclude } from 'class-transformer';
+import { CommentLike } from './comment-like.entity';
 
 @Entity()
 export class Comment {
@@ -20,11 +21,17 @@ export class Comment {
   @Column('text')
   content: string;
 
+  @Column({ default: 0 })
+  likeCount: number;
+
   @ManyToOne((type) => User, (user) => user.comment)
   author: User;
 
   @ManyToOne((type) => Post, (post) => post.postLike)
   post: Post;
+
+  @OneToMany(() => CommentLike, (commentLike) => commentLike.comment)
+  commentLike: CommentLike[];
 
   @ManyToOne((type) => Comment, (comment) => comment.children)
   parent: Comment;

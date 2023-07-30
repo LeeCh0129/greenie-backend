@@ -236,4 +236,20 @@ export class PostsController {
       createCommentDto.replyToId,
     );
   }
+
+  @Patch(':id/comments/:commentId/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '댓글 좋아요' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '댓글 좋아요 성공',
+  })
+  likeComment(
+    @CurrentUser() user: PayloadDto,
+    @Param('id', ParseIntPipe) postId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+  ) {
+    return this.commentsService.patchLike(user.id, commentId);
+  }
 }
