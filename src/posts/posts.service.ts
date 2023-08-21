@@ -1,3 +1,4 @@
+import { UserProfile } from './../entities/user-profile.entity';
 import {
   BadRequestException,
   Inject,
@@ -53,10 +54,40 @@ export class PostsService {
     return new PageDto<Post>(posts[1], take, posts[0]);
   }
 
+  async findUserPosts(
+    userId: number,
+    page: number,
+    take: number,
+  ): Promise<PageDto<Post>> {
+    const posts = await this.postRepository
+      .createQueryBuilder('post')
+      .take(take)
+      .skip(take * (page - 1))
+      .select([
+        'post.id',
+        'post.title',
+        'post.thumbnail',
+        'post.likeCount',
+        'post.createdAt',
+        'user.id',
+        'profile.id',
+        'profile.nickname',
+        'profile.profileImage',
+      ])
+      .leftJoin('post.author', 'user')
+      .leftJoin('user.profile', 'profile')
+      .where('post.deletedAt IS NULL')
+      .andWhere('user.id = :userId', { userId })
+      .orderBy('post.createdAt', 'DESC')
+      .getManyAndCount();
+
+    return new PageDto<Post>(posts[1], take, posts[0]);
+  }
+
   async findOne(postId: number, userId: number) {
     const post = await this.postRepository.findOne({
       where: { id: postId },
-      relations: ['author'],
+      relations: ['author', 'author.profile'],
     });
 
     if (!post) {

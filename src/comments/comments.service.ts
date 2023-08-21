@@ -9,6 +9,7 @@ import { PageDto } from 'src/dtos/page.dto';
 import { CommentLike } from 'src/entities/comment-like.entity';
 import { Comment } from 'src/entities/comment.entity';
 import { Post } from 'src/entities/post.entity';
+import { UserProfile } from 'src/entities/user-profile.entity';
 import { User } from 'src/entities/user.entity';
 import { EntityManager, Repository } from 'typeorm';
 
@@ -32,11 +33,37 @@ export class CommentsService {
         .take(take)
         .skip(take * (page - 1))
         .leftJoinAndSelect('comment.author', 'author')
+        .leftJoinAndSelect('author.profile', 'profile')
         .leftJoinAndSelect('comment.replyTo', 'replyTo')
         .leftJoinAndSelect('comment.parent', 'parent')
         .where('comment.post_id = :postId', { postId })
         .select(['comment', 'author', 'replyTo.id', 'parent.id'])
         // .andWhere('comment.deletedAt = null')
+        .orderBy('comment.group', 'DESC')
+        .getManyAndCount();
+      return new PageDto<Comment>(result[1], take, result[0]);
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException('올바르지 않은 요청입니다.');
+    }
+  }
+
+  async findAllUserComments(
+    userId: number,
+    page: number,
+    take: number,
+  ): Promise<PageDto<Comment>> {
+    try {
+      const result = await this.commentsRepository
+        .createQueryBuilder('comment')
+        .take(take)
+        .skip(take * (page - 1))
+        .leftJoinAndSelect('comment.author', 'author')
+        .leftJoinAndSelect('comment.replyTo', 'replyTo')
+        .leftJoinAndSelect('comment.parent', 'parent')
+        .leftJoinAndSelect('author.profile', 'profile')
+        .where('comment.author = :userId', { userId })
+        .select(['comment', 'author', 'replyTo.id', 'parent.id'])
         .orderBy('comment.group', 'DESC')
         .getManyAndCount();
       return new PageDto<Comment>(result[1], take, result[0]);
@@ -62,8 +89,14 @@ export class CommentsService {
     const post = new Post();
     post.id = postId;
 
+    const userProfile = await this.entityManager.findOne(UserProfile, {
+      where: { user: { id: authorId } },
+    });
+
     const author = new User();
     author.id = authorId;
+
+    // const author = await this.entityManager.findOne(User, authorId);
 
     let group;
     // 댓글일 경우에는 group이 기존 가장 높은 그룹 값 +1 이기때문에 조회가 필요함
@@ -97,6 +130,8 @@ export class CommentsService {
       group,
       replyTo,
     });
+
+    comment.author.profile = userProfile;
 
     await this.commentsRepository.save(comment);
 
