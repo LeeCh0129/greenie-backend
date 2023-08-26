@@ -11,6 +11,10 @@ export class CreatePostDto {
   content: string;
 
   @IsString()
+  @ApiProperty({
+    description: '썸네일',
+    default: 'http://localhost:3000/api/swagger',
+  })
   @IsOptional()
   thumbnail: string;
 }

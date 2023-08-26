@@ -24,6 +24,7 @@ export class UsersService {
       .createQueryBuilder('user')
       .where('user.id = :id', { id })
       .leftJoinAndSelect('user.post', 'post')
+      .leftJoinAndSelect('user.profile', 'profile')
       .getOne();
   }
   async sendOtpEmail(email: string, mode: string): Promise<void> {
@@ -86,6 +87,7 @@ export class UsersService {
   async verifyOtp(email: string, otp: string, mode: string): Promise<string> {
     const user = await this.entityManager.findOne(User, {
       where: { email },
+      // relations: ['profile'],
     });
 
     if (!user) {

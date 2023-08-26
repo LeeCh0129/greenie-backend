@@ -9,7 +9,11 @@ export class CommentResponseDto {
   content: string;
 
   @ApiProperty({ description: '댓글 작성자' })
-  author: { id: number; nickname: string };
+  author: {
+    id: number;
+    nickname: string;
+    profileImage: string;
+  };
 
   @ApiProperty({ description: '댓글이 달린 게시물 ID' })
   postId: number;
@@ -35,6 +39,7 @@ export class CommentResponseDto {
     this.author = {
       id: comment.author.id,
       nickname: comment.author.profile.nickname,
+      profileImage: comment.author.profile.profileImage,
     };
     this.postId = comment.post.id;
     this.parentId = comment.parent?.id;
