@@ -75,6 +75,40 @@ export class PostsController {
     return this.postsService.findOne(postId, null);
   }
 
+  @Get('user/posts')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '사용자가 작성한 게시글 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '사용자가 작성한 게시글 조회 성공',
+    type: PageDto,
+  })
+  findUserPosts(
+    @CurrentUser() user: PayloadDto,
+    @Query() query: PaginationDto,
+  ) {
+    const { page, take } = query;
+    return this.postsService.findUserPosts(user.id, page, take);
+  }
+
+  @Get('user/comments')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '사용자가 작성한 댓글 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '사용자가 작성한 댓글 조회 성공',
+    type: PageDto,
+  })
+  findAllUserComments(
+    @CurrentUser() user: PayloadDto,
+    @Query() query: PaginationDto,
+  ) {
+    const { page, take } = query;
+    return this.commentsService.findAllUserComments(user.id, page, take);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
