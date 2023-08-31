@@ -37,7 +37,7 @@ export class CommentsService {
         .leftJoinAndSelect('comment.replyTo', 'replyTo')
         .leftJoinAndSelect('comment.parent', 'parent')
         .where('comment.post_id = :postId', { postId })
-        .select(['comment', 'author', 'replyTo.id', 'parent.id'])
+        .select(['comment', 'author', 'replyTo.id', 'parent.id', 'profile'])
         // .andWhere('comment.deletedAt = null')
         .orderBy('comment.group', 'DESC')
         .getManyAndCount();
@@ -61,7 +61,6 @@ export class CommentsService {
         .leftJoinAndSelect('comment.author', 'author')
         .leftJoinAndSelect('comment.replyTo', 'replyTo')
         .leftJoinAndSelect('comment.parent', 'parent')
-        .leftJoinAndSelect('author.profile', 'profile')
         .where('comment.author = :userId', { userId })
         .select(['comment', 'author', 'replyTo.id', 'parent.id'])
         .orderBy('comment.group', 'DESC')
